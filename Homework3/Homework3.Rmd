@@ -1,0 +1,36 @@
+---
+title: "Homework 3"
+author: "Your name"
+date: "2/21/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#### Due: 3/3/2019 before 11pm. Submit in Canvas (file upload). Rmd file and the html output file (submit both files) are strongly recommended, but not required.
+
+<br>
+
+1. Consider data from a multi-nomial distribution with $p$ categories. Let $X_{1}, \ldots, X_{n}$ be independent identically distributed (i.i.d.), where $X_{i} = (X_{i1}, \ldots, X_{ip})'$ and $X_{ij} = \mathbf{1}\{\mbox{the ith observation is from the jth category}\}$. 
+Namely, only the $j$th component of $X_{i}$ is 1 and all other components are 0 if this observation is from the $j$th category.
+The probability of an observation from each category is $\pi = (\pi_{1}, \ldots, \pi_{p})'$. Then $Z = \sum_{i = 1}^{n} X_{i}$ is multi-nomial distributed with number of trials being $n$, and success probability being $\pi$.
+This success probability is estimated by $\widehat{\pi} = Z / n = \sum_{i = 1}^{n} X_{i} / n$.
+
+    (a) Clearly, $\mbox{E}(X_{i}) = \pi$. Find the $\Sigma = \mbox{Cov}(X_{i})$. [10 points]
+    (b) Assume the sample size $n$ is large. To test for the hypothesis that $\pi$ is equal to a specific vector, say $\pi_{j} = 1 / p$ for all $1 \leq j \leq p$, can we use the Hotelling's $T^{2}$ statistic on the data $\{X_{i}\}_{i = 1}^{n}$? If not, what statistic we should construct? [10 points]
+    (c) What is the limiting distribution of the test statistic you used for question (b)? [10 points]
+    (d) We want to construct simultaneous confidence intervals for $\pi_{j}$ for $j = 1, \ldots, p$ and possibly some of their contrasts. List two ways of constructing such simultaneous confidence intervals. [10 points]
+    (e) Which way in question (d) you prefer, why? [5 points]
+
+2. For the `Effluent Study` in our lecture `InferenceForMeans-Repeated`, the conclusion from the Hotelling's $T^{2}$ test doesn't agree with the result from the simultaneous confidence intervals for the difference of the means of the two variables. Possible reasons include outliers in the data, sample size is small and the data is not normal distributed. The data is in our Canvas data folder, named `effluent.dat`, with the code `effluent.R`.
+
+    (a) Test for Multivariate normality assumption on the data; [5 points]
+    (b) Try a more appropriate test for the hypothesis $\mu_{state} = \mu_{private}$. You can delete the possible outlier, or transform the data to normal first (no longer testing for $\mu_{state} = \mu_{private}$ on the original scale), or use permutation test (How to do permutation test for paired data?). [15 points]
+
+3. The Olive Oils dataset `olive.dat` (provided in the folder `Data and code` in Canvas) consists of measurements of eight chemical components (columns 2-8) on 572 samples of olive oil. The samples come from three different regions of Italy. The regions are further partitioned into nine areas: areas 1–4 belong to region R1, areas 5 and 6 belong to region R2, and areas 7–9 belong to region R3. The first column of the file provides the indicator for the nine regions. (Note that the file has a header.) We will now focus on Region R2. Answer the following questions:
+
+    (a) Calculate the covariance matrix for the chemical composition in each of the two sub-regions. Display the covariance matrices for the two sub-regions side-by-side, and comment on possible differences. You can use the heatmap to visualize the two matrices. Be sure to use the same scale for the color. [10 points]
+    (b) Test for equality of the mean chemical compositions between the two groups. Specifically, report the Hotelling's $T^{2}$ statistics and its p-value. Are you comfortable to use Hotellings’ $T^{2}$ test without testing for the multivariate normality of the data and the equivalence of the two covariance matrices?  [10 points]
+    (c) Restrict attention to the coordinates for the fifth and sixth chemicals. Provide individual pairwise t-tests for the differences in the composition of the two chemicals among the two groups, using Bonferroni method to adjust the 5% level of significance. Plot their Bonferroni adjusted confidence intervals, and on the same plot, draw the 95% confidence ellipses for the two groups. (You may use the ellipse package.) [15 points]

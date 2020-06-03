@@ -1,0 +1,218 @@
+---
+title: "HaVu_hw3"
+author: "Vu Thi-Hong-Ha"
+date: "March 2, 2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Question 1:
+*a* < br/>
+$\displaystyle \mathbf{E}(X_i) = \displaystyle \mathbf{E}[(X_{i1}, \dots, X_{ip})'] = \displaystyle [\mathbf{E}(X_{i1}), \dots, \mathbf{E}(X_{ip})]' = \pi$. <br />
+$$\Sigma = Cov(X_i) = \left[\begin{array}
+{rrr}
+Cov(X_{i1}, X_{i1}) & Cov(X_{i1}, X_{i2}) & ... & Cov(X_{i1}, X_{ip}) \\
+Cov(X_{i2}, X_{i1}) & Cov(X_{i2}, X_{i2}) & ... & Cov(X_{i2}, X_{ip}) \\
+...  & ... & ... & ... \\
+Cov(X_{ip}, X_{i1}) & Cov(X_{ip}, X_{i2}) & ... & Cov(X_{ip}, X_{ip})
+\end{array}\right]$$
+We have: <br />
+$Cov(X_{ij}, X_{ij}) = \pi_j(1-\pi_j)$ for $j = 1, \dots, p.$ <br />
+$Cov(X_{ij}, X_{ik}) = \mathbf{E}[(X_{ij} - \mathbf{E}(X_{ij}))(X_{ik} - \mathbf{E}(X_{ik}))] = \mathbf{E}(X_{ij}X_{ik}) - \mathbf{E}(X_{ij})\mathbf{E}(X_{ik}) = -\pi_j\pi_k$. <br />
+Hence,
+$$\Sigma = Cov(X_i) = \left[\begin{array}
+{rrr}
+\pi_1(1-\pi_1) & -\pi_1\pi_2 & ... & -\pi_1\pi_p \\
+-\pi_1\pi_2 & \pi_2(1-\pi_2) & ... & -\pi_2\pi_p \\
+...  & ... & ... & ... \\
+-\pi_p\pi_1 & -\pi_p\pi_2 & ... & \pi_p(1-\pi_p)
+\end{array}\right]$$
+
+*b* <br />
+When the sample size $n$ is large, the sample variance-covariance matrix will approximate the population variance-covariance matrix $\Sigma$. From the derivation in a), we can see that each column sums to 0, and each row also sums to zero. Indeed, for example,
+$$\pi_1(1-\pi_1) + -\pi_1\pi_2 + ... + -\pi_1\pi_p = \pi_1 -\pi_1(\pi_1+\pi_2+ \dots + \pi_p) = \pi_1 - \pi_1 = 0.$$
+
+Therefore, $\Sigma$ is not invertible, and we cannot use Hotelling's test. <br />
+
+Let us construct another test statistics. Consider $Z = \sum_{i = 1}^{n} X_{i}$ is multi-nomial distributed with number of trials being $n$, and success probability being $\pi$. Then
+$$Z = \left[\begin{array}
+{rrr}
+\sum_{i = 1}^{n} X_{i1} \\
+\sum_{i = 1}^{n} X_{i2}\\
+... \\
+\sum_{i = 1}^{n} X_{ip}
+\end{array}\right] := \left[\begin{array}
+{rrr}
+Z_1 \\
+Z_2 \\
+... \\
+Z_p
+\end{array}\right]$$
+
+Define our new statistic as
+$$\chi^2 = \sum_{j=1}^{p} \displaystyle \frac{(Z_j - n\pi_j)^2}{n\pi_j},$$
+where $n$ is the number of trials. <br />
+
+*c* <br />
+As $\displaystyle \mathbf{E}(X_i) = \pi$, by Central Limit Theorem:
+$$\sqrt n (\bar{X} - \pi) \rightarrow^{d} N_p(0, \Sigma)$$
+We will prove that $\chi^2$ has Chi-square limiting distribution. State some definitions and lemmas as the following: <br />
+**Definition:** A symmetric matrix $\mathbf{P}$ is called a projection matrix if it is idempotent, i.e, $\mathbf{P}^2 = \mathbf{P}.$ <br />
+
+**Lemma 1:** Suppose $\mathbf{P}$ is a projection matrix. Then every eigenvalue of $P$ equals either 0 or 1. Suppose $r$ denotes the number of eigenvalues of $\mathbf{P}$ that equal 1. Then if $Y \sim N_k(\mathbf{0}, \mathbf{P})$, then $\mathbf{Y}'\mathbf{Y} \sim \chi^2_{r}.$ <br />
+*Proof* <br />
+Let $v \neq 0$ be an eigenvector of $\mathbf{P}$. By definition of eigenvalues and eigenvectors: $\mathbf{P}v = \lambda v = \mathbf{P}^2v$ (by definition of projection matrices). <br />
+Moreover, $\mathbf{P}^2v = \mathbf{P}(\mathbf{P}v) = \mathbf{P}(\lambda v) = \lambda (\mathbf{P}v) = \lambda^2v.$ Hence, $\lambda^2 = \lambda$, and $\lambda = 0$ or $\lambda = 1.$ <br />
+Define $W = \mathbf{P}^{-1/2}\mathbf{Y}$. Then $W \sim N_k(\mathbf{0}, \mathbf{I}).$ <br />
+$\mathbf{Y} = \mathbf{P}^{1/2}W$, hence:
+$$\mathbf{Y}'\mathbf{Y} = (\mathbf{P}^{1/2}W)'(\mathbf{P}^{1/2}W) = W'(\mathbf{P}^{1/2})'(\mathbf{P}^{1/2})W = W'\mathbf{P}W \sim \chi^2$$
+The degree of freedom is equal to $rank(\mathbf{P}) = r$. Then, $\mathbf{Y}'\mathbf{Y} \sim \chi^2_r$.
+
+**Lemma 2:** The trace of a square matrix $M$, $Tr(M)$, is equal to the sum of its diagonal entries. For matrices $A$ and $B$ whose sizes allow them to be multiplied in either order, $Tr(AB) = Tr(BA)$. <br />
+Proofs have been done in lecture or previous homework. <br />
+
+**Lemma 3:** If $M$ is symmetric, then $Tr (M)$ equals the sum of the eigenvalues of $M$. <br />
+Proofs have been done in lecture <br />
+
+Let $\Gamma = diag(\pi)$. Then we have
+$$\sqrt n \Gamma^{-1/2}(\bar{\mathbf{X}} - \pi) \rightarrow^{d} N_p(0, \Gamma^{-1/2}\Sigma(\Gamma^{-1/2})')$$
+
+Moreover, $\Sigma = \Gamma - \pi\pi'$. Then:
+$$\Gamma^{-1/2}\Sigma\Gamma^{-1/2} = I - \Gamma^{-1/2}\pi\pi'(\Gamma^{-1/2})' = I - \pi^{1/2}(\pi^{1/2})'$$
+has trace $p-1$. <br />
+Moreover,
+$$(\pi^{1/2}(\pi^{1/2})')(\pi^{1/2}(\pi^{1/2})') = I - 2\pi^{1/2}(\pi^{1/2})' + \pi^{1/2}(\pi^{1/2})'\pi^{1/2}(\pi^{1/2})' = I - \pi^{1/2}(\pi^{1/2})' = I - \pi^{1/2}(\pi^{1/2})'$$
+because $(\pi^{1/2})'\pi^{1/2} = 1$, so $\Gamma^{-1/2}\Sigma(\Gamma^{-1/2})'$ is a projection matrix. <br />
+Define $\mathbf{A} = \sqrt n \Gamma^{-1/2}(\bar{\mathbf{X}} - \pi)$. Then 
+$$\chi^2 = \mathbf{A}'\mathbf{A} \rightarrow^{d} \chi^2_{p-1}$$
+
+*d* <br />
+There are many ways to construct simultaneous confidence regions, two of which are: <br />
+- Construct $(1- \alpha)\%$ simultaneous confidence intervals for the induvidual mean component $\pi_i$ for $i = 1,\dots,p$ using Chi-square distribution. <br />
+- If there are a small number ($m$) of interested individual confidence statements, we can use Bonferroni method. <br />
+
+*e* <br />
+In this case that we do not have any number $m$ of interested confidence statements, and as we assume $n$ is large, I will opt for building one-at-a-time confidence intervals for individual means. The procedure is as the following: <br />
+**Result** Let $\mathbf{X_1}, \dots, \mathbf{X_n}$ be a random sample from a population with mean $\mathbf{\mu}$ and a positive definite covariance $\Sigma$. If $n-p$ is large,
+$$a'\bar{\mathbf{X}} ± \sqrt{\chi^2_{p}(\alpha)}\sqrt{\frac{a'Sa}{n}}$$
+will contain $a'\mu$, for every $a$, with probability approximately $1-\alpha$. Following this procedure, we can construct the confidence ellipsoid also.
+
+
+
+## Question 2:
+*a* <br />
+
+```{r}
+effluent <- read.table("D:/Coursework/Stat 501 Spring 2020/effluent.dat", header = F, col.names = c("sample", "bod1", "ss1", "bod2", "ss2"))
+
+d1 <- effluent$bod1 - effluent$bod2
+d2 <- effluent$ss1 - effluent$ss2
+
+testnormality <- function(X, numproj = 100000)
+{
+  # note that the value returned is the q-value of the test
+  p = ncol(X)
+  n = nrow(X)
+  x <- matrix(rnorm(numproj * p), nrow = p)
+  # generate 100,000, standard
+  # p-variate
+  # normal random variables.
+  
+  
+  y <- matrix(sqrt(apply(x^2, 2, sum)), nrow = p, ncol = numproj, by = T)
+  
+  z <- x / y
+  
+  tempdat <- as.matrix(X) %*% z  # this gives rise to a p x numproj matrix
+  # called tempdat here
+  
+  # perform Shapiro-Wilks' test and calculate individual p-values on each of
+  # the numproj observation sets.
+  
+  pvals <- as.numeric(matrix(unlist(apply(tempdat, 2, shapiro.test)),
+                             ncol=4, by = T)[,2])
+  
+  return(min(sort(pvals) * numproj / (1:numproj)))
+}
+
+testnormality(as.matrix(d1))
+testnormality(as.matrix(d2))
+```
+
+We can see that `d1`, which is the difference of BOD between labs, is not normally distributed.
+
+*b* <br />
+Let's try removing the possible outlier, which is the 8th sample.
+```{r}
+effluent <- effluent[-8,]
+
+xbar <- colMeans(effluent[ ,2:5])
+xvar <- var(effluent[ ,2:5])
+
+Cstar <-matrix(c(1, 0, -1, 0, 0, 1, 0, -1), 2, 4, byrow=T)
+
+Cxbar <- Cstar %*% xbar
+Cxvar <- Cstar %*% xvar %*%t(Cstar)
+
+p <- nrow(Cxvar)
+n <- nrow(effluent)
+nullmean <- rep(0, p)
+d <- Cxbar-nullmean
+t2<-n*t(d)%*%solve(Cxvar)%*%d
+t2mod<- (n-p)*t2/(p*(n-1))
+pval <- 1- pf(t2mod,p,n-p)
+
+cat("Hotelling T-squared statistic", fill=T)
+t2
+
+cat("p-value", fill=T)
+pval
+
+library(ICSNP, suppressWarnings())
+HotellingsT2( as.matrix(effluent[, 2:5]) %*% t(Cstar), mu = c(0,0))
+```
+With this p-value and $\alpha = 0.05$, we reject the null.
+
+
+## Question 3:
+```{r}
+library(pheatmap)
+
+olive <- read.table("D:/Coursework/Stat 501 Spring 2020/Homework3/olive.dat", header = T)
+olive1 <- subset(olive, olive$group.id == "5")
+olive2 <- subset(olive, olive$group.id == "6")
+olive <- rbind(olive1, olive2)
+
+#covariance matrix for the chemical composition of area 5
+CovOlive1 <- cov(olive1[, -1])
+
+#covariance matrix for the chemical composition of area 5
+CovOlive2 <- cov(olive2[, -1])
+
+#set the same color scale
+Breaks <- seq(min(CovOlive1, CovOlive2), max(CovOlive1, CovOlive2), length = 100)
+
+#draw   
+pheatmap(CovOlive1, breaks = Breaks, cluster_rows=FALSE, cluster_cols=FALSE)
+pheatmap(CovOlive2, breaks = Breaks, cluster_rows=FALSE, cluster_cols=FALSE)
+```
+By plotting the two covariance matrices, we can see that there are certain covariance values that are extremely different between the two matrices. From these plots, we might have an idea that the two covariance matrices are not equivalent. <br />
+
+*b* <br />
+```{r}
+HotellingsT2(olive1[, -1], olive2[, -1])
+```
+With such small p-value, we reject the null that the the mean chemical compositions between two groups are equal. However, given that the two groups' covariance matrices might not be equivalent, and that we haven't test for normality of the samples, it may not be appropriate to use Hotelling's test here. <br />
+
+*c* <br />
+```{r}
+pX5 <- t.test(olive1$X5, olive2$X5, paired = F)
+pX6 <- t.test(olive1$X6, olive2$X6, paired = F)
+
+```
+We reject the null that the mean differences of each chemical are 0. <br />
+(I didn't have enough time to complete this question)
+
