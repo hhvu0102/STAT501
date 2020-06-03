@@ -1,0 +1,235 @@
+---
+title: "Homework 1"
+author: "Thi-Hong-Ha Vu; NetID: 851924086"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Question 1:
+We have $X = [X_1, ..., X_n]'$ where $X_i = [x_{i1}, ..., x_{ip}]'$. Then, we can write $X$ as: <br />
+$$X = \left[\begin{array}
+{rrr}
+x_{11} & x_{12} & ... & x_{1p} \\
+x_{21} & x_{22} & ... & x_{2p} \\
+...  & ... & ... & ... \\
+x_{n1} & x_{n2} & ... & x_{np}
+\end{array}\right] $$
+
+Then, $\displaystyle \frac{1}{n}X'X$ can be expressed as:
+$$ \displaystyle \frac{1}{n}
+\left[\begin{array}
+{rrr}
+x_{11} & x_{21} & ... & x_{n1} \\
+x_{12} & x_{22} & ... & x_{n2} \\
+...  & ... & ... & ... \\
+x_{1p} & x_{2p} & ... & x_{np}
+\end{array}\right]
+\left[\begin{array}
+{rrr}
+x_{11} & x_{12} & ... & x_{1p} \\
+x_{21} & x_{22} & ... & x_{2p} \\
+...  & ... & ... & ... \\
+x_{n1} & x_{n2} & ... & x_{np}
+\end{array}\right]
+= \displaystyle \frac{1}{n}
+\left[\begin{array}
+{rrr}
+\displaystyle \sum_{i=1}^{n}(x_{i1})^{2} & \displaystyle \sum_{i=1}^{n} x_{i1}x_{i2} & ... & \displaystyle \sum_{i=1}^{n} x_{i1}x_{ip} \\
+\displaystyle \sum_{i=1}^{n}x_{i2}x_{i1} & \displaystyle \sum_{i=1}^{n} (x_{i2})^{2} & ... & \displaystyle \sum_{i=1}^{n} x_{i2}x_{ip} \\
+...  & ... & ... & ... \\
+\displaystyle \sum_{i=1}^{n}x_{ip}x_{i1} & \displaystyle \sum_{i=1}^{n} x_{ip}x_{i2} & ... & \displaystyle \sum_{i=1}^{n}(x_{ip})^{2}
+\end{array}\right] $$
+
+We also have $\bar{X} = [\overline{X_1}, \overline{X_2}, ..., \overline{X_p}]$, where $\overline{X_j} = \displaystyle \frac{1}{n} \displaystyle \sum_{i=1}^{n} x_{ij}$. Then, $\bar{X}'\bar{X}$ can be expressed as: <br />
+$\bar{X}'\bar{X} =$ $$\left[\begin{array}
+{rrr}
+(\bar{X_1})^{2} & \bar{X_1}\bar{X_2} & ... & \bar{X_1}\bar{X_p} \\
+\bar{X_2}\bar{X_1} & (\bar{X_2})^{2} & ... & ... \\
+...  & ... & ... & ...  \\
+\bar{X_p}\bar{X_1} & \bar{X_p}\bar{X_2} & ... & (\bar{X_p})^{2} \\
+\end{array}\right] $$
+
+Then, the element $S_{j,k}$ of $\displaystyle \frac{1}{n}X'X - \bar{X}'\bar{X}$ can be expressed as: <br />
+$S_{j,k} = \displaystyle \frac{1}{n} \displaystyle \sum_{i=1}^{n} x_{ij}x_{ik} - \bar{X_j}\bar{X_k} = n^{-1} (\sum_{i = 1}^{n} x_{ij}x_{ik} - n\bar{X}_{j_1}\bar{X}_{j_2})$ (1) <br />
+Now, <br />
+$\displaystyle s_{j_1j_2} = n^{-1} \sum_{i = 1}^{n} (x_{ij_1} - \bar{X}_{j_1})(x_{ij_2} - \bar{X}_{j_2})$ <br />
+$= \displaystyle n^{-1} \sum_{i = 1}^{n} (x_{ij_1}x_{ij_2} - x_{ij_1}\bar{X}_{j_2} - \bar{X}_{j_1}x_{ij_2} + \bar{X}_{j_1}\bar{X}_{j_2})$ <br />
+$= \displaystyle n^{-1} (\sum_{i = 1}^{n} x_{ij_1}x_{ij_2} - n\bar{X}_{j_1}\bar{X}_{j_2}) + n^{-1} (- \bar{X}_{j_2}\sum_{i = 1}^{n}x_{ij_1} - \bar{X}_{j_1}\sum_{i = 1}^{n}x_{ij_2} + 2n\bar{X}_{j_1}\bar{X}_{j_2})$ (2) <br />
+We have: $n^{-1} (- \bar{X}_{j_2}\sum_{i = 1}^{n}x_{ij_1} - \bar{X}_{j_1}\sum_{i = 1}^{n}x_{ij_2} + 2n\bar{X}_{j_1}\bar{X}_{j_2}) = 0$ (3) <br />
+From (1), (2) and (3), we get that $\displaystyle  S = \frac{1}{n}X' X - \bar{X}' \bar{X}.$
+
+## Question 2:
+*a)* $\Sigma = \sigma \mathbb{1} \mathbb{1}'$ where $\mathbb{1} = (1, 1, \ldots, 1)'$  <br />
+We have $\Sigma$ is a rank 1 matrix of dimension $p \times p$. Assume that $\sigma \neq 0$ and $p > 1$, else the case is trivial. With rank 1 matrix, we have the following properties [Ref. 1]: <br />
+Let $A \in M_n(\mathbf{R})$, $n \ge 2$, be a matrix of rank 1. Then: <br />
+i) There exist $x, y$ vectors in $\mathbf{R^{n}}$; $x, y \neq 0$ such that $A = xy'$; <br />
+ii) $A$ has at most one non-zero eigenvalue with algebraic multiplicity 1; <br />
+ii) This eigenvalue is $y'x$; <br />
+iii) $x$ is the right and $y$ is the left eigenvector corresponding to this eigenvalue. <br />
+For detailed proofs, refer to Ref. 1. <br />
+We have there exits $\lambda_{1} = 0$ is an eigenvalue. To find an eigenvector corresponding to $\lambda_{1}$, take any nonzero vector $v$ such that $\Sigma v = 0$. In particular, $v = [a_{1}, ..., a_{p}]$ will satisfy if $\displaystyle \sum_{i=1}^{p} a_{i} = 0$. <br />
+Using Property (i) above, we can write $\Sigma = xy'$ whenre $x = [1, 1, .., 1]'$ is a vector of dimension $p \times 1$ and $y = [\sigma, \sigma, ..., \sigma]'$ is a vector of dimension $p \times 1$. <br />
+Using Property (ii), we have our non-zero eigenvalue $\lambda_{2} = y'x = p\sigma$. From Property (iii), the right eigenvector is $x$ and the left one is $y$. <br />
+
+*b)* $\Sigma = \mbox{diag}(\sigma_{1}, \ldots, \sigma_{p})$ is a diagonal matrix. <br />
+We have a property: determinant of a diagonal matrix is the product of all elements on the diagonal. Hence, <br />
+$$|\Sigma - \lambda I| = (\sigma_{1} - \lambda)(\sigma_{2} - \lambda)\ldots(\sigma_{p} - \lambda) = 0$$
+Then, our set of eigenvalues is $\{\sigma_{1}, \sigma_{2}, ..., \sigma_{p} \}$. <br />
+By spectral decomposition for $\Sigma$, which is a square symmatrix matrix, we have:
+$$\Sigma = [e_{1}, {e_2}, ..., e_{p}] \left[\begin{array}
+{rrr}
+\sigma_{1} & 0 & ... & 0 \\
+0 & \sigma_{2} & ... & 0 \\
+...  & ... & ... & ... \\
+0 & 0 & ... & \sigma_{p}
+\end{array}\right] [e_{1}, {e_2}, ..., e_{p}]' := P \Sigma P'$$
+Therefore, $P = I$, and $e_{1} = [1, 0, 0, ..., 0]$, $e_{2} = [0, 1, 0, ..., 0]$, ..., $e_{p} = [0, 0, ..., 1]$ .
+
+## Question 3:
+First, in order for $AB$ and $BA$ to both exist, $A$ and $B$ have to be square matrices. Say both of $A$ and $B$ are of dimension $k \times k$. Then $AB$ and $BA$ are also $k \times k$ matrices. Hence, the trace of $AB$ and $BA$ are the sum of the diagonal elements on each matrix. <br />
+Let $A$ and $B$ be of the following form: <br />
+$$A = \left[\begin{array}
+{rrr}
+a_{11} & a_{12} & ... & a_{1k} \\
+a_{21} & a_{22} & ... & a_{2k} \\
+...  & ... & ... & ... \\
+a_{k1} & a_{k2} & ... & a_{kk}
+\end{array}\right],
+B = \left[\begin{array}
+{rrr}
+b_{11} & b_{12} & ... & b_{1k} \\
+b_{21} & b_{22} & ... & b_{2k} \\
+...  & ... & ... & ... \\
+b_{k1} & b_{k2} & ... & b_{kk}
+\end{array}\right]$$
+Then,
+$$trace(AB) = \displaystyle \sum_{i=1}^{k}\sum_{j=1}^{k} a_{ij}b_{ji}$$
+$$trace(BA) = \displaystyle \sum_{i=1}^{k}\sum_{j=1}^{k} b_{ji}a_{ij} = \sum_{i=1}^{k}\sum_{j=1}^{k} a_{ij}b_{ji} = trace(AB)$$
+
+## Question 4:
+Let $\mu_{j1}$, $\sigma_{j1}$ be the sample mean and standard deviation of $X_{j1}$ and $\mu_{j2}$, $\sigma_{j2}$ be the sample mean and standard deviation of $X_{j2}$, respectively. <br />
+$$corr(X_{j1}, X_{j2}) = \displaystyle \frac{\mathbf{E} [(X_{j1} - \mu_{j1})(X_{j2} - \mu_{j2})] }{\sigma_{j1}\sigma_{j2}}$$
+After standardizing, $\displaystyle X_{j1,standarized} = \frac{ X_{j1} - \mu_{j1} }{\sigma_{j1}}$ and $\displaystyle X_{j2,standarized} = \frac{[_{j2} - \mu_{j2} }{\sigma_{j2}}$ both have mean as 0 and standard deviation as 1. Hence,
+$$corr(X_{j1, standardized}, X_{j2, standardized}) = cov(X_{j1, standardized}, X_{j2, standardized}) = \displaystyle \mathbf{E} [(\frac{X_{j1} - \mu_{j1} }{\sigma_{j1}} - 0)(\frac{X_{j2} - \mu_{j2} }{\sigma_{j2}} - 0)] = corr(X_{j1}, X_{j2})$$
+
+## Question 5:
+*On one hand* <br />
+$S = \displaystyle \frac{1}{n}X' X$ is a sqare symmetric matrix. By spectral decomposition, $S$ can be expressed as:
+$$S = \lambda_{1}e_{1}e_{1}' + \ldots + \lambda_{p}e_{p}e_{p}' = Q\Lambda Q'$$ where $Q = [e_{1}, ..., e_{p}], \Lambda = \mbox{diag}(\sigma_{1}, \ldots, \sigma_{p})$. <br />
+Then, 
+$$S - S_{m} = (\lambda_{1}e_{1}e_{1}' + \ldots + \lambda_{p}e_{p}e_{p}') - (\lambda_{1}e_{1}e_{1}' + \ldots + \lambda_{m}e_{m}e_{m}')$$
+$$= \lambda_{m+1}e_{m+1}e_{m+1}' + \ldots + \lambda_{p}e_{p}e_{p}' = P \Gamma P'$$
+where $P = [e_{m+1}, ..., e_{p}]$ and $\Gamma = \mbox{diag}(\sigma_{m+1}, \ldots, \sigma_{p}$ <br />
+Then,
+$$(S-S_{m})^2 = P \Gamma P'P \Gamma P' = P (\Gamma)^2 P'$$
+Denote $(\Gamma)^2 = U$. We have $(S-S_{m})^2$ is a square matrix, so $trace[(S-S_{m})^2] = trace(U) = \displaystyle \sum_{i=m+1}^{p} (\lambda_{i}^2)$ <br />
+Similarly, $S^2 = Q (\Lambda)^2 Q'$, and $trace(S^2) = \displaystyle \sum_{j=1}^{p} (\lambda_{j}^2)$ <br />
+Then, $$\displaystyle \frac{trace[(S-S_{m})^2]}{trace(S^2)} = \frac{\sum_{i=m+1}^{p} (\lambda_{i}^2)}{\sum_{j=1}^{p} (\lambda_{j}^2)} < 1.$$
+
+*On the other hand* <br />
+Denote $X_{t} := [Xe_{1}, \ldots, Xe_{m}]$ whose sample mean equals 0. By Question 1, we have the covariance matrix of $X_{t}$ is $S_{t} = \displaystyle \frac{1}{m}X_{t}'X_{t}$ <br />
+$S_{t}$ is a square symmetric matrix, so by spectral decomposition, we can write $S_{t} = \lambda_{1}e_{1}e_{1}' + \ldots + \lambda_{m}e_{m}e_{m}' = Q_{m} \Lambda_{m} Q_{m}'$, where $Q_{m} = [e_{1}, ..., e_{m}], \Lambda = \mbox{diag}(\sigma_{1}, \ldots, \sigma_{m})$. Then $S_{t}^2 = Q_{m} (\Lambda_{m})^2 Q_{m}'$. Then $tr(S_{t}^2) = tr(\Lambda_{m}^2) = \displaystyle \sum_{k=1}^{m} (\lambda_{k}^2)$ <br />
+Then, $$\displaystyle \frac{trace(S_{t}^2)}{trace(S^2)} = \frac{\sum_{k=1}^{m} (\lambda_{k}^2)}{\sum_{j=1}^{p} (\lambda_{j}^2)}$$
+This ratio will be close to 1 if $m$ is large enough.
+ 
+*Comment:* <br />
+With demensionality reduction by eigenvectors, we can reduce the dimension of the original matrix from $n \times p$ to $n \times m$. If $m$ is large enough, we can retain much information while not having to deal with too many variables (only $m$ variables). In this case, we estimate population covariance matrix by sample covariance matrix, conduct eigen decomposition on sample covariance matrix, then transform data by eigenvectors of sample covariance matrix. In this way, we project the data onto the directions of the sample covariance's eigenvectors, so that we can retain as much variance as possible. <br />
+
+## Question 6:
+*a* <br />
+```{r}
+suppressPackageStartupMessages(library("datasets"))
+suppressPackageStartupMessages(library("ggplot2"))
+
+data(iris)
+ggplot(data = iris, aes(x = Sepal.Length, y = Sepal.Width, colour = Species)) +
+  geom_point()
+
+```
+
+We can see that when projecting the species onto the variables *Sepal.Width* and *Sepal.Length*, *setosa* samples cluster together, while *versicolor* and *virginica* mix with each other. We can say that *satosa* is different from the other two species with respect to *Sepal.Width* and *Sepal.Length*, while it is hard to tell the difference between *versicolor* and *virginica* using *Sepal.Width* and *Sepal.Length*. <br />
+
+*b* <br />
+```{r}
+ggplot(data = iris, aes(x = Sepal.Length, y = Petal.Width, colour = Species)) +
+  geom_point()
+
+```
+
+The three species are quite distinguisable if we project the data onto two variables *Petal.Width* and *Sepal.Length*. <br />
+
+```{r}
+ggplot(data = iris, aes(x = Sepal.Length, y = Petal.Length, colour = Species)) +
+  geom_point()
+
+```
+
+The three species are quite distinguisable if we project the data onto two variables *Petal.Length* and *Sepal.Length*. <br />
+
+```{r}
+ggplot(data = iris, aes(x = Sepal.Width, y = Petal.Width, colour = Species)) +
+  geom_point()
+
+```
+
+The three species are quite distinguisable if we project the data onto two variables *Petal.Width* and *Sepal.Width*. <br />
+
+```{r}
+ggplot(data = iris, aes(x = Sepal.Width, y = Petal.Length, colour = Species)) +
+  geom_point()
+
+```
+
+The three species are quite distinguisable if we project the data onto two variables *Petal.Length* and *Sepal.Width*. <br />
+
+```{r}
+ggplot(data = iris, aes(x = Petal.Length, y = Petal.Width, colour = Species)) +
+  geom_point()
+
+```
+
+The three species are quite distinguisable if we project the data onto two variables *Petal.Width* and *Petal.Length*. <br />
+
+*More comments:* Using the plots like above, we can draw a priliminary conclusion that *setosa* is very different from the other two species, while *versicolor* and *virginica* are somewhat close to each other, depending on projected variables. <br />
+
+*c* <br />
+```{r}
+setosa <- subset(iris, iris$Species == "setosa")
+setosa <- setosa[,c(1,2,3,4)]
+setosaMean <- colMeans(setosa)
+names(setosaMean) <- colnames(setosa)
+setosaMean
+
+versicolor <- subset(iris ,iris$Species == "versicolor")
+versicolor <- versicolor[,c(1,2,3,4)]
+versicolorMean <- colMeans(versicolor)
+names(versicolorMean) <- colnames(versicolor)
+versicolorMean
+
+virginica <- subset(iris ,iris$Species == "virginica")
+virginica <- virginica[,c(1,2,3,4)]
+virginicaMean <- colMeans(virginica)
+names(virginicaMean) <- colnames(virginica)
+virginicaMean
+```
+
+*d* <br />
+```{r}
+suppressPackageStartupMessages(library(ggradar))
+suppressPackageStartupMessages(library(dplyr))
+suppressPackageStartupMessages(library(scales))
+irisdata <- iris %>%
+  group_by(Species) %>%
+  mutate_each(list(rescale)) %>%
+  summarise(mean(Sepal.Length), mean(Sepal.Width), mean(Petal.Length), mean(Petal.Width))
+ggradar(irisdata,plot.title = "Star plot", axis.labels = c("Sepal.Length", "Sepal.Width", "Petal.Length", "Petal.Width"), legend.text.size = 14, legend.position = "bottom", values.radar = c("", "", ""), x.centre.range = 5)
+```
+
+From this plot, we can see that the three species have clear differences in *Petal.Width*. With respect to *Sepal.Length* and *Petal.Length*, the species are different to a small extent. And they are nearly similar when it comes to *Sepal.Width*. Hence, *Petal.Width* can be a good varible to distinguish the three species. <br />
+
+## References:
+1. Osnaga, Silvia. On Rank One Matrices And Invariant Subspaces. 2004, https://www.researchgate.net/publication/238285068_On_rank_one_matrices_and_invariant_subspaces. Accessed 5 Feb 2020.
+
