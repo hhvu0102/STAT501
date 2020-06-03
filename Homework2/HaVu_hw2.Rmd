@@ -1,0 +1,489 @@
+---
+title: "HaVu_hw2"
+author: "Vu Thi-Hong-Ha"
+date: "February 18, 2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library("MASS", warn.conflicts = FALSE)
+library("stats", warn.conflicts = FALSE)
+library("ggplot2", warn.conflicts = FALSE)
+library("gridExtra", warn.conflicts = FALSE)
+```
+
+## Question 1:
+First, let's define a function to generate data with different combination of scenarios:
+```{r}
+generateData <- function(n, p, error_method){ #choose between for error distributions
+                                              #standard_normal, standard_t_3df,
+                                              #standard_t_10df, or standard_exp_1
+  #generate beta
+  beta_1 <- replicate(p/2, 1)
+  beta_0 <- replicate(p/2, 0)
+  beta <- c(beta_1, beta_0)
+  
+  #generate covariates
+  mu <- replicate(p, 0)
+  cov <- matrix(0, nrow=p, ncol=p)
+  for (j1 in 1:p) {
+    for (j2 in 1:p) {
+      cov[j1, j2] <- 0.75**abs(j1 - j2)
+    }
+  }
+  
+  #generate covariates
+  x <- mvrnorm(n, mu = mu, Sigma = cov)
+  
+  #generate error terms
+  if (error_method == "standard_normal") {
+    error <- rnorm(n, mean = 0, sd = 1)
+    error <- (error-mean(error))/sd(error)
+  }
+  else if (error_method == "standard_t_3df") {
+    error <- rt(n, 3)
+    error <- (error-mean(error))/sd(error)
+  }
+  else if (error_method == "standard_t_10df") {
+    error <- rt(n, 10)
+    error <- (error-mean(error))/sd(error)
+  }
+  else if (error_method == "standard_exp_1") {
+    error <- rexp(n, rate = 1)
+    error <- (error-mean(error))/sd(error)
+  }
+  else {
+    print("Please hoose the correct error distribution.")
+  }
+  
+  #calculate correspondence y_i
+  y <- x%*%beta + error
+  
+  data <- data.frame(y, x)
+  
+  return(data)
+}
+```
+Then define a function to calculate the emperical coverage for each coefficient:
+```{r}
+#emperical coverage for beta
+#generate data for 1000 times, get CI for each data, then calculate how many times true beta fall into these regions
+empi_cov <- function(nboot, n, p, error_method) { #nboot = number of generating times
+                                                  #n = number of obs, p = number of vars
+                                                  #error_method as in generateData()
+  empi_prob <- replicate(p, 0)
+  for (i in 1:nboot) {
+    beta_1 <- replicate(p/2, 1)
+    beta_0 <- replicate(p/2, 0)
+    beta <- c(beta_1, beta_0)
+    data <- generateData(n, p, error_method)
+    fit <- lm(formula = y ~ . + 0, data = data)
+    confi_int <- confint.default(fit)
+    for (j in 1:p) {
+      if (beta[j] > confi_int[j, 1] & beta[j] < confi_int[j, 2]) {
+        empi_prob[j] <- empi_prob[j] + 1
+      }
+    }
+  }
+  empi_prob <- empi_prob/nboot
+  
+  return(empi_prob)
+}
+
+```
+We then calculate least square estimators, their 95\% confidence intervals, emperical coverage for each coefficient, and average emperical coverages for nonzero and zero coefficients: <br />
+a) Comment on the effect of sample size: <br />
+To see the effect of sample size, I will fix $p = 10$ and error distribution to be standard normal.
+```{r}
+#when n = 40
+n <- 40
+p <- 10
+nboot <- 1000
+error_method <- c("standard_normal")
+
+#generate data
+data <- generateData(n, p, error_method)
+
+#estimate coefficients
+fit <- lm(formula = y ~ . + 0, data = data)
+beta_est40 <- summary(fit)$coefficients[, "Estimate"]
+
+#confident interval for beta, assuming normal approximation
+beta_ci40 <- confint.default(fit)
+
+#empirical coverage for beta, over 1000 runs
+empi_prob40 <- empi_cov(nboot, n, p, error_method)
+ave_nonzero40 <- mean(empi_prob40[1:(p/2)])
+ave_zero40 <- mean(empi_prob40[(p/2+1):p])
+```
+
+```{r}
+#when n = 80
+n <- 80
+p <- 10
+nboot <- 1000
+error_method <- c("standard_normal")
+
+#generate data
+data <- generateData(n, p, error_method)
+
+#estimate coefficients
+fit <- lm(formula = y ~ . + 0, data = data)
+beta_est80 <- summary(fit)$coefficients[, "Estimate"]
+
+#confident interval for beta, assuming normal approximation
+beta_ci80 <- confint.default(fit)
+
+#empirical coverage for beta, over 1000 runs
+empi_prob80 <- empi_cov(nboot, n, p, error_method)
+ave_nonzero80 <- mean(empi_prob80[1:(p/2)])
+ave_zero80 <- mean(empi_prob80[(p/2+1):p])
+```
+Let's look at least square estimators, their 95\% confidence intervals, emperical coverage for each coefficient, and average emperical coverages for nonzero and zero coefficients side by side:
+```{r}
+#estimate beta
+beta_est40
+beta_est80
+
+#95% confidence interval of beta
+beta_ci40
+beta_ci80
+
+#empirical coverage for beta
+empi_prob40
+empi_prob80
+
+#average empirical coverage for nonzero beta
+ave_nonzero40
+ave_nonzero80
+
+#average empirical coverage for zero beta
+ave_zero40
+ave_zero80
+```
+We can see that when the sample size increases, the estimations for the coefficients are different. However, given that we know the true values of beta, the estimations when $n=80$ are much closer to the true values (in comparison with $n=40$). The 95\% confidence intervals for beta when $n=80$ are generally smaller than those of $n=40$, indicating that when $n=80$ the estimation is stricter. We can also see that average empirical coverage for nonzero and zero beta when $n=80$ are slightly higher, which means the more sample we have, the more likely our estimations are correct.
+
+
+b) Comment on the effect of dimension: <br />
+To see the effect of dimension, I will fix $n = 80$ and error distribution to be standard normal.
+```{r}
+#when p = 10
+n <- 80
+p <- 10
+nboot <- 1000
+error_method <- c("standard_normal")
+
+#generate data
+data <- generateData(n, p, error_method)
+
+#estimate coefficients
+fit <- lm(formula = y ~ . + 0, data = data)
+beta_est10 <- summary(fit)$coefficients[, "Estimate"]
+
+#confident interval for beta, assuming normal approximation
+beta_ci10 <- confint.default(fit)
+
+#empirical coverage for beta, over 1000 runs
+empi_prob10 <- empi_cov(nboot, n, p, error_method)
+ave_nonzero10 <- mean(empi_prob10[1:(p/2)])
+ave_zero10 <- mean(empi_prob10[(p/2+1):p])
+```
+
+```{r}
+#when p = 30
+n <- 80
+p <- 30
+nboot <- 1000
+error_method <- c("standard_normal")
+
+#generate data
+data <- generateData(n, p, error_method)
+
+#estimate coefficients
+fit <- lm(formula = y ~ . + 0, data = data)
+beta_est30 <- summary(fit)$coefficients[, "Estimate"]
+
+#confident interval for beta, assuming normal approximation
+beta_ci30 <- confint.default(fit)
+
+#empirical coverage for beta, over 1000 runs
+empi_prob30 <- empi_cov(nboot, n, p, error_method)
+ave_nonzero30 <- mean(empi_prob30[1:(p/2)])
+ave_zero30 <- mean(empi_prob30[(p/2+1):p])
+```
+Let's look at least square estimators, their 95\% confidence intervals, emperical coverage for each coefficient, and average emperical coverages for nonzero and zero coefficients side by side:
+```{r}
+#estimate beta
+beta_est10
+beta_est30
+
+#95% confidence interval of beta
+beta_ci10
+beta_ci30
+
+#empirical coverage for beta
+empi_prob10
+empi_prob30
+
+#average empirical coverage for nonzero beta
+ave_nonzero10
+ave_nonzero30
+
+#average empirical coverage for zero beta
+ave_zero10
+ave_zero30
+```
+We can see that the estimations look reasonable and quite close to the true value. The average empirical coverage for nonzero and zero beta are roughly the same too. This might be because the sample size $n=80$ is considerably larger than the number of variables $p$. <br />
+
+
+Now, let's see how the situation may change if we decrease the sample size to $n = 40$.
+```{r}
+#when p = 10 and n = 40
+n <- 40
+p <- 10
+nboot <- 1000
+error_method <- c("standard_normal")
+
+#generate data
+data <- generateData(n, p, error_method)
+
+#estimate coefficients
+fit <- lm(formula = y ~ . + 0, data = data)
+beta_est40 <- summary(fit)$coefficients[, "Estimate"]
+
+#confident interval for beta, assuming normal approximation
+beta_ci40 <- confint.default(fit)
+
+#empirical coverage for beta, over 1000 runs
+empi_prob40 <- empi_cov(nboot, n, p, error_method)
+ave_nonzero40 <- mean(empi_prob40[1:(p/2)])
+ave_zero40 <- mean(empi_prob40[(p/2+1):p])
+```
+
+```{r}
+#when p = 30 and n = 40
+n <- 40
+p <- 30
+nboot <- 1000
+error_method <- c("standard_normal")
+
+#generate data
+data <- generateData(n, p, error_method)
+
+#estimate coefficients
+fit <- lm(formula = y ~ . + 0, data = data)
+beta_est30 <- summary(fit)$coefficients[, "Estimate"]
+
+#confident interval for beta, assuming normal approximation
+beta_ci30 <- confint.default(fit)
+
+#empirical coverage for beta, over 1000 runs
+empi_prob30 <- empi_cov(nboot, n, p, error_method)
+ave_nonzero30 <- mean(empi_prob30[1:(p/2)])
+ave_zero30 <- mean(empi_prob30[(p/2+1):p])
+```
+Let's look at least square estimators, their 95\% confidence intervals, emperical coverage for each coefficient, and average emperical coverages for nonzero and zero coefficients side by side:
+```{r}
+#estimate beta
+beta_est10
+beta_est30
+
+#95% confidence interval of beta
+beta_ci10
+beta_ci30
+
+#empirical coverage for beta
+empi_prob10
+empi_prob30
+
+#average empirical coverage for nonzero beta
+ave_nonzero10
+ave_nonzero30
+
+#average empirical coverage for zero beta
+ave_zero10
+ave_zero30
+```
+We can see that the estimations when $p=30, n=40$ are much more variable and far away from true value. The average empirical coverage for beta when $p=30, n=40$  are also lower than those of $p=10, n=40$. We then can draw a conclusion that the more variables we have, the more observations we need, or else our estimations will suffer from great variablity. <br />
+This, however, is not alwasy the case when it comes to real data sets. For example,in biological data, we observe thousands of genes with only a few samples. In cases like this, simple multiple linear regression might not be the suitable model to describe the data. <br />
+
+
+c) Comment on effect of variance distribution:  <br />
+Let us fix $n=80$ and $p=10$. Similarly, we run the `generateData()` and `empi_cov()` without showing the explicit codes. <br />
+We can see that the estimations, confidence intervals and empirical coverages  do that vary too much between different error distribution. As we have a large number of samples comparing to the number of variables, by central limit theorem, the distribution of errors will not put too much effect on the estimations at all.
+
+## Question 2:
+a) <br />
+Let $X = [X_1, X_2, \dots, X_{n-1}']$ be a vector where $X_i \sim N(\mu, \sigma^2)$ for $i = 1, \dots, n-1$. <br />
+Then, $\mu_X = [\mu, \mu, \dots, \mu]$ is the mean $(n-1) \times 1$ vector of $X$, and <br />
+$$\Sigma_X = \left[\begin{array}
+{rrr}
+\sigma^2 & 0 & ... & 0 \\
+0 & \sigma^2 & ... & 0 \\
+...  & ... & ... & ... \\
+0 & 0 & ... & \sigma^2
+\end{array}\right] $$
+is the $(n-1) \times (n-1)$ covariance-variance matrix of $X$. The elements not on the diagonal are all 0 because $X_i$ are i.i.d. <br />
+Let $Z = \displaystyle \frac{X_1 + X_2 + \dots + X_n}{n}$. Then $Z \sim N(\mu, \displaystyle \frac{\sigma^2}{n})$. <br />
+We have $X|Z \sim N(\mu_*, \Sigma_*)$ where <br />
+$\mu_* = \mu_X + \Sigma_{ZX}'\Sigma_{ZZ}^{-1}(Z-\mu_Z)$ and <br />
+$\Sigma_* = \Sigma_{XX} - \Sigma_{ZX}'\Sigma_{ZZ}^{-1}\Sigma_{ZX}$. <br />
+Then, <br />
+$\Sigma_{XX} = \Sigma_X$; <br />
+$\Sigma_{ZX} = [Cov(Z, X_1), \dots, Cov(Z, X_n)]$, where $Cov(Z, X_i) = \displaystyle \frac{\sigma^2}{n}$ for $i = 1, \dots, n$. <br />
+Hence, <br />
+$\Sigma_{ZX}'\Sigma_{ZZ}^{-1} = [1, 1, \dots, 1]$ is a $(n-1) \times 1$ matrix; <br />
+$\mu_* = Z$; <br />
+$$\Sigma_* = \left[\begin{array}
+{rrr}
+\displaystyle \frac{n-1}{n}\sigma^2 & \displaystyle \frac{-1}{n}\sigma^2 & ... & \displaystyle \frac{-1}{n}\sigma^2 \\ 
+\displaystyle \frac{-1}{n}\sigma^2 & \displaystyle \frac{n-1}{n}\sigma^2 & ... & \displaystyle \frac{-1}{n}\sigma^2 \\
+...  & ... & ... & ... \\
+\displaystyle \frac{-1}{n}\sigma^2 & \displaystyle \frac{-1}{n}\sigma^2 & ... & \displaystyle \frac{n-1}{n}\sigma^2
+\end{array}\right]$$
+
+
+b) 
+```{r}
+generate <- function(n, mean, sigma) {
+  X <- rnorm(n, mean, sigma)
+  currentMean <- mean(X)
+  newMean <- mean - currentMean
+  X <- X + newMean
+  
+  return(X)
+}
+
+generate(10, 1, 1)
+```
+
+
+c)
+```{r}
+predict <- function(B, sigma){
+  A <- matrix(0, nrow = 16, ncol = 16)
+  for (i in 1:4) {
+    for (j in 1:4) {
+      mat <- matrix(generate(16, B[i, j], sigma), nrow = 4, ncol = 4)
+      A[(i*4-3):(i*4), (j*4-3):(j*4)] <- mat
+    }
+  }
+  
+  return(A)
+}
+
+B <- matrix(c(1,2,3,4,5,6,7,8,9,1,2,3,4,5,6,7), nrow = 4, ncol = 4)
+predict(B, 1)
+```
+
+
+
+
+## Question 3:
+a) <br />
+```{r}
+## Normal Q-Q plot
+X <- read.table("D:/Coursework/Stat 501 Spring 2020/Homework2/board.stiffness.dat", head = FALSE, row.names = 1)
+
+QQplot.normal = function(x){
+  # x is an observed vector of a variable
+  x.sort = sort(x)
+  n = length(x)
+  p = ( c(1 : n) - 0.5 ) / n
+  q = qnorm(p)
+  res = data.frame(cbind(x.sort, q))
+  names(res) = c("sample.quantile", "normal.quantile")
+  return(res)
+}
+
+
+p1 <- ggplot(data = QQplot.normal(X$V2), aes(x = sample.quantile, y = normal.quantile)) + geom_point() +
+  ggtitle("Variable V2")
+p2 <- ggplot(data = QQplot.normal(X$V3), aes(x = sample.quantile, y = normal.quantile)) + geom_point() +
+  ggtitle("Variable V3")
+p3 <- ggplot(data = QQplot.normal(X$V4), aes(x = sample.quantile, y = normal.quantile)) + geom_point() +
+  ggtitle("Variable V4")
+p4 <- ggplot(data = QQplot.normal(X$V5), aes(x = sample.quantile, y = normal.quantile)) + geom_point() +
+  ggtitle("Variable V5")
+grid.arrange(p1, p2, p3, p4, nrow = 2, ncol = 2)
+```
+
+b) <br />
+```{r}
+## Chi square Q-Q plot
+QQplot.chiSquare = function(data){
+  # X is data set with p variables and n observations
+  # Get p and n
+  n <- dim(data)[1]
+  p <- dim(data)[2]
+  
+  # Calculate mean and variance-covariance matrix
+  mean <- apply(data, 2, "mean")
+  cov <- cov(data)
+  
+  # Compute the generalized distances from the sample mean and covariance matrix
+  diffs <- as.matrix(data - matrix(mean, nrow=n, ncol=p, byrow=TRUE))
+  gdist <- diag(diffs %*% solve(cov) %*% t(diffs))
+  
+  # Sort the distances 
+  s.gdist <- sort(gdist)
+  
+  # Find the matching list of quantiles.
+  prob <- (c(1:n) - 0.5)/n
+  quant <- qchisq(prob, p)
+  res = data.frame(cbind(s.gdist, quant))
+  names(res) = c("generalized_distance", "chiSquare.quantile")
+  
+  return(res)
+}
+
+chi <- QQplot.chiSquare(X)
+ggplot(data = chi, aes(x = chiSquare.quantile, y = generalized_distance)) + geom_point()
+```
+
+c) <br />
+```{r}
+testnormality <- function(X, numproj = 100000)  {
+    p = ncol(X)
+    n = nrow(X)
+    x <- matrix(rnorm(numproj * p), nrow = p) # generate 100,000, standard
+                                              # p-variate normal random variables.
+    y <- matrix(sqrt(apply(x^2, 2, sum)), nrow = p, ncol = numproj, by = T)
+    z <- x / y
+    tempdat <- as.matrix(X) %*% z  # this gives rise to a p x numproj matrix
+                                   # called tempdat here
+
+    # perform Shapiro-Wilks' test and calculate individual p-values on each of
+    # the numproj observation sets.
+    pvals <- as.numeric(matrix(unlist(apply(tempdat, 2, shapiro.test)),
+                             ncol=4, by = T)[,2])
+
+    return(min(sort(pvals))) #return smallest pvalue
+  }
+
+testnormality(X)
+```
+
+d) <br />
+```{r}
+n <- nrow(X)
+cor.mat <- cor(X)
+mean <- apply(X, 2, "mean")
+
+#it wil take forever to do this step, sorry T_T
+nboot <- 100
+pvalue <- vector()
+for (i in 1:nboot) {
+  X.star <- mvrnorm(n, mean, cor.mat)
+  p <- testnormality(X.star)
+  pvalue <- c(pvalue, p)
+}
+
+
+#quantile to construct the reject region
+quantile(pvalue, 0.025)
+quantile(pvalue, 0.975)
+```
+With this region, we reject the multivariate normality hypothesis on the stiffness data.
+

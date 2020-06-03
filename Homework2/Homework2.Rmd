@@ -1,0 +1,48 @@
+---
+title: "Homework 2"
+author: "Your name"
+date: "2/11/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#### Due: 2/18/2019 before 11pm. Submit Rmd file and the html output file in Canvas (file upload).
+
+<br>
+
+1. **Does normal distribution assumption matter?** [30 points]
+
+To try to answer this question, we run a simulation study in the context of regression. Consider 
+$$y_{i} = x_{i}'\beta + \epsilon_{i}$$
+for $i = 1, \ldots, n$, where $x_{i} = (x_{i1}, \ldots, x_{ip})'$ are the covariates, and $\beta = (\beta_{1}, \ldots, \beta_{p})'$ are the regression coefficients. Calculate the least square estimator $\widehat{\beta} = (\widehat{\beta}_{1}, \ldots, \widehat{\beta}_{p})'$ for $\beta$, and their 95% confidence intervals based on normal approximation. Calculate the empirical coverage for each of the coefficient, denoted as $p_{j}$, over 1000 repititions. 
+Separatly report the average empirical coverages for the nonzero regression coefficients (average $p_{j}$ over nonzero $\beta_{j}$) and the zero coefficients (average $p_{j}$ over zero $\beta_{j}$).
+Consider the combination of the following settings:
+
+a. $n = 40$, $n = 80$, comment on the effect of sample size;
+b. The first half of $\beta$ are 1 and the rest dimensions are zero. Consider $p = 10$ and $p = 30$. Comment on the effect of dimension;
+c. Generate the covariate $x_{i}$ from multivariate normal distribution with mean 0 and covariance $\Sigma = (\sigma_{j_1j_2})$ for $\sigma_{j_1j_2} = 0.75^{|j_1-j_2|}$. This is the AR covariance structrue for the covariates;
+d. Generate the error $\epsilon_{i}$ from the following scenarios, and comment on the imapct of the variance distribution on the empirical covarages.
+
+    - N(0, 1)
+    - standardized t distribution with 3 degree of freedom (standardized so that it has variance 1)
+    - standardized t distribution with 10 degree of freedom (standardized so that it has variance 1)
+    - exponential distribution with parameter 1 (standardized so that it has mean 0)
+    
+
+2. Let $X_{1}, \ldots, X_{n}$ be i.i.d. **univariate** random variables from $N(\mu, \sigma^{2})$. Answer the following questions:
+
+    (a) Provide the conditional distribution of $X_{1}, \ldots, X_{n - 1}$ given $\bar{X}$; [10 points]
+    (b) Write a function in R which will generate a random vector $X = (X_{1}, \ldots, X_{n - 1}, X_{n})$ given $\bar{X}$. (Note that $X_{n} = n \bar{X} - \sum_{i = 1}^{n - 1} X_{i}$.) [10 points]
+    (c) Suppose we have a $16 \times 16$ matrix $A$ which is averaged in each of the $4 \times 4$ non-overlapping blocks, resulting a $4 \times 4$ matrix $B$. Based on the result from (b), write a function to predict the original matrix $A$. Try your function on a setting of specific $B$ and $\sigma^{2}$. [10 points]
+
+(This result can be used to predict an image at a higher resolution after it is compressed. The compression is usually done by averaging all the pixel intensities in non-overlapping small blocks.)
+
+3. Use the data `board.stiffness.dat` (the stiffness at four locations of a board) and code `testnormality.R` provided in the folder `Data and code` in Canvas. 
+    
+    (a) Use `QQplot.normal` function in the code and `ggplot` to make quantile plots for each of the four variables. Use `facet` option to put them in one plot. Comment. [10 points]
+    (b) Write a function to conduct Chi-square quantile plot. Implement this function on this dataset. [10 points]
+    (c) Based on the fucntion `testnormality` in the code, conduct random projection based shapiro-wilks test for multivariate data. Change the code to return the minimum pvalue of the shapiro-wilks test among all the random projections. (The original code returns the qvalue, another statistic for the test). Implement this function on the stiffness data. [10 points]
+    (d) Use parametric bootstrap to determine the reject region of the test. Shall we reject the multivariate normality hypotheses on the stiffness data? [10 points]
