@@ -1,0 +1,31 @@
+---
+title: "Homework 4"
+author: "Your name"
+date: "3/7/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#### Due: 3/13/2019 before 11pm. Submit in Canvas (file upload). Rmd file and the html output file (submit both files) are strongly recommended, but not required.
+
+<br>
+
+1. Verify the conclusions on the distribution of $\widehat{\beta}_{k}$ and $\mbox{Cov}(\widehat{\beta}_{k}, \widehat{\beta}_{i})$ in our lecture note `Manova-I`, page 377. [20 points]
+
+2. The Olive Oils dataset `olive.dat` (provided in the folder `Data and code` in Canvas) consists of measurements of eight chemical components (columns 2-8) on 572 samples of olive oil. The samples come from three different regions of Italy. The regions are further partitioned into nine areas: areas 1–4 belong to region R1, areas 5 and 6 belong to region R2, and areas 7–9 belong to region R3. The first column of the file provides the indicator for the nine regions. Now, we study the whole data set. 
+
+    (a) Provide appropriate graphical summaries for the dataset. You may plot the sample means of all nine areas (using different color in `geom_line`) in one figure, using x-axis as the indicator for chemical components, and also use different line styles (or different shapes of points in `geom_point`) for the three sub-regions to better understand the dataset. Comment on the distinctiveness between the chemical composition of the olive oils in the three main regions, as well as individually between the sub-regions. Can you see interactions between regions and chemical components? [15 points]
+    (b) Perform a one-way multivariate analysis of variance to test for differences in mean chemical com- position among the three regions. [10 points]
+    (c) Test for the interaction between regions and chemical components. What are the $C$ and $M$ matrices being used in this hypothesis? [10 points]
+    (d) Test for the equivalence of means of chemical components among the 4 areas within region R1. What are the $C$ and $M$ matrices being used in this hypothesis? [10 points]
+    
+3. Consider the `fbiwide` data in `classdata` package. Use the code `devtools::install_github("heike/classdata")` to install this package if you haven't done so. Only focus on the states `California`, `Iowa`, `Illinois`, `District of Columbia` and `New York`.
+
+    (a) Take the log transformation of the data first, and then take the difference between consecutive years (current year minus previous year). Why this transformation provides the change rate of the number of crimes? [5 points]
+    (b) Use the transformed data to compare the change rates of different crimes. Summarize `Year` to three groups: from 1961 to 1980, from 1981 to 2000, from 2001 to 2017. Call this variable as `decade`. Perform a two-way Manova for the interaction between states and decade. [10 points]
+    (c) Report and explain the sum of square matrices from question (b). Verify their sum is equal to the corrected total sum of squares matrix. [10 points]
+    (d) I also want to study the differences of the change rates among `Aggravated.assault`, `Burglary` and `Larceny.theft`. This indicates whether all the crimes decrease or increase at the same rate. Use `Aggravated.assault - Burglary` and `Burglary - Larceny.theft`. Are there interaction effects between states and decades for the difference of the change rates among the three crimes? [10 points]
+    

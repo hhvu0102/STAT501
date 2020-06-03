@@ -1,0 +1,267 @@
+---
+title: "HaVu_hw4"
+author: "Vu Thi-Hong-Ha"
+date: "March 13, 2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse, suppressMessages())
+library(ggplot2, suppressMessages())
+library(car, suppressMessages())
+```
+
+## Question 1:
+We have:
+$$
+X_{n \times p} = A_{n \times (g+1)}\beta_{(g+1) \times p} + \epsilon_{n \times p}
+$$
+and
+$$
+\hat{\beta}_{g \times p} = (A'_{g \times n}A_{n \times g})^{-1}A'_{g \times n}X_{n \times g}
+$$
+Then,
+$$
+X_k = A\beta_k + \epsilon_k
+$$
+
+$$
+\hat{\beta}_{k} = (A'A)^{-1}A'X_{k}
+$$
+Therefore,
+$$
+\mathbf{E}[ \hat{\beta}_k ] = \mathbf{E}[(A'A)^{-1}A'X_{k}] = (A'A)^{-1}A'\mathbf{E}[X_k]
+$$
+
+$$
+\mathbf{E}[X_k] = \mathbf{E}[A\beta_k + \epsilon_k] = \mathbf{E}[A\beta_k] + \mathbf{E}[\epsilon_k] = \mathbf{E}[\epsilon_k]
+$$
+because $A\beta_k$ is a constant matrix so $\mathbf{E}[A\beta_k] = A\beta_k$. <br />
+As $\epsilon_k \sim N(0, \Sigma_k)$, $\mathbf{E}[\epsilon_k] = 0$, and $\mathbf{E}[X_k] = A\beta_k$. <br />
+Hence,
+$$
+\mathbf{E}[ \hat{\beta}_k ] = (A'A)^{-1}A'A\beta_k = \beta_k
+$$
+Next,
+$$
+Var[\hat{\beta}_k] = Var[(A'A)^{-1}A'X_{k}] = (A'A)^{-1}A'Var(X_{k})[(A'A)^{-1}A']'
+$$
+
+$$
+Var[X_k] = Var[A\beta_k + \epsilon_k] = Var[\epsilon_k] = \sigma_{kk}
+$$
+Hence,
+$$
+Var[\hat{\beta}_k] = (A'A)^{-1}A'\sigma_{kk}[(A'A)^{-1}A']' = (A'A)^{-1}A'[(A'A)^{-1}A']'\sigma_{kk} = (A'A)^{-1}A'A[(A'A)^{-1}]'\sigma_{kk} = \sigma_{kk}(A'A)^{-1}
+$$
+Next,
+$$
+cov(\hat{\beta}_k, \hat{\beta}_i) = cov((A'A)^{-1}A'X_{k}, (A'A)^{-1}A'X_{i}) = (A'A)^{-1}A'\mathbf{E}[(X_k - \mathbf{E}(X_k))(X_i - \mathbf{E}(X_i)) ][(A'A)^{-1}A']' = (A'A)^{-1}A'\sigma_{ki}[(A'A)^{-1}A']' = \sigma_{ki}(A'A)^{-1}
+$$
+
+
+## Question 2:
+*a)*
+```{r}
+olive <- read.table("D:/Coursework/Stat 501 Spring 2020/Homework3/olive.dat", header = T)
+
+##a
+temp <- olive %>% group_by(group.id) %>% summarise_all(mean)
+temp <- temp[,-1]
+data <- data.frame(matrix(ncol = 3, nrow = 9*8))
+colnames(data) <- c("group.id", "chemical", "sampleMean")
+data$group.id <- as.character(c(rep(1, 8), rep(2, 8), rep(3, 8), rep(4, 8), rep(5, 8),
+                                rep(6, 8), rep(7, 8), rep(8, 8), rep(9, 8)))
+data$chemical <- rep(c("1", "2", "3", "4", "5", "6", "7", "8"), 9)
+data$sampleMean <- as.numeric(c(temp[1,], temp[2,], temp[3,], temp[4,], temp[5,], temp[6,],
+                                temp[7,], temp[8,], temp[9,]))
+
+ggplot(data = data, aes(x=as.numeric(chemical), y=sampleMean, color=group.id)) + geom_line() +
+  xlab("Chemicals") + ylab("Sample Mean")
+```
+From the plot we can see that some chemicals have similar mean compositions across all regions, but some have very distinctive impacts (chemical X1, X4 and X5, for example). <br />
+
+*b)*
+```{r}
+olive$region <- NA
+for (i in 1:nrow(olive)) {
+  if (olive$group.id[i] == "1" | olive$group.id[i] == "2" | olive$group.id[i] == "3" | olive$group.id[i] == "4") {
+    olive$region[i] = "R1"
+  }
+  else if (olive$group.id[i] == "5" | olive$group.id[i] == "6") {
+    olive$region[i] = "R2"
+  }
+  else {
+    olive$region[i] = "R3"
+  }
+}
+
+olive$region <- as.factor(olive$region)
+
+fit <- manova(as.matrix(olive[,2:9]) ~ olive$region)
+fit #view model
+
+#two tests for mean differences
+summary(fit, test="Wilks")
+summary(fit, test="Pillai")
+```
+Based on the two tests above, we reject the null that the mean components are similar across three regions. <br />
+
+
+*c)*
+```{r}
+olive$group.id <- as.factor(olive$group.id)
+
+fit.lm <- lm(cbind(X1, X2, X3, X4, X5, X6, X7, X8)~group.id , data = olive, contrasts = list(group.id = contr.SAS))
+
+C <- matrix(c(0, 1, 0, 0, 0, 0, 0, 0, 0,
+              0, 0, 1, 0, 0, 0, 0, 0, 0,
+              0, 0, 0, 1, 0, 0, 0, 0, 0,
+              0, 0, 0, 0, 1, 0, 0, 0, 0,
+              0, 0, 0, 0, 0, 1, 0, 0, 0,
+              0, 0, 0, 0, 0, 0, 1, 0, 0,
+              0, 0, 0, 0, 0, 0, 0, 1, 0,
+              0, 0, 0, 0, 0, 0, 0, 0, 1), ncol = 9,  by = T)
+M <- matrix(c(1, 0, 0, 0, 0, 0, 0,
+             -1, 1, 0, 0, 0, 0, 0,
+             0, -1, 1, 0, 0, 0, 0,
+             0, 0, -1, 1, 0, 0, 0,
+             0, 0, 0, -1, 1, 0, 0,
+             0, 0, 0, 0, -1, 1, 0,
+             0, 0, 0, 0, 0, -1, 1,
+             0, 0, 0, 0, 0, 0, -1), nrow = 8, by = T)
+
+newfit <- linearHypothesis(model = fit.lm, hypothesis.matrix = C, P = M)
+print(newfit)
+```
+Based on this result, we reject the null that the regions and chemical components have no interaction. Matrix $C$ and $M$ are:
+```{r}
+C
+M
+```
+
+
+*d)*
+```{r}
+##d
+region1 <- subset(olive, olive$region == "R1")
+
+fit.lm.r1 <- lm(cbind(X1, X2, X3, X4, X5, X6, X7, X8)~group.id , data = region1, contrasts = list(group.id = contr.SAS))
+
+C.r1 <- matrix(c(0, 1, 0, 0,
+                 0, 0, 1, 0,
+                 0, 0, 0, 1), ncol = 4,  by = T)
+
+fit.r1 <- linearHypothesis(model = fit.lm.r1, hypothesis.matrix = C.r1)
+
+print(fit.r1)
+```
+
+We reject the null that means of chemical components among the 4 areas within region R1 are equivalent. The matrix $C$ is:
+```{r}
+C
+```
+Matrix M is the I matrix.
+
+
+## Question 3:
+*a)* <br />
+Looking at the data, we can expect the rate of change is much smaller than 1. Say, in a year, the data is $X_t$, and by the next year, the data $X_{t+1}$changes by $100r\%$. Then $X_{t+1} = X_t(1+r)$. <br />
+If $r << 1$, then $ln(1+r) \approx r$. <br />
+Then $ln(X_{t+1}) = ln(X_t) + ln(1+r) = ln(X_t) + r$. <br />
+Hence, $ln(X_{t+1}) - ln(X_t)$ is approximately the rate of change in data. <br />
+
+*b)*
+```{r}
+fbiwide <- read.table("D:/Coursework/Stat 501 Spring 2020/Homework4/fbiwide.txt", sep = " ", header = T, row.names = 1)
+fbiwide <- subset(fbiwide, fbiwide$State %in% c("California", "Iowa", "Illinois", "District of Columbia", "New York"))
+fbiwide <- fbiwide[, !(names(fbiwide) %in% c("Legacy.rape", "Rape")),]
+fbiwide_trans <- log(fbiwide[,4:10])
+fbiwide[,4:10] <- fbiwide_trans
+fbiwide$decade <- NA
+d1 <- seq(1961, 1980, by = 1)
+d2 <- seq(1981, 2000, by = 1)
+d3 <- seq(2001, 2017, by = 1)
+for (i in 1:nrow(fbiwide)) {
+  if (fbiwide$Year[i] %in% d1) {
+    fbiwide$decade[i] <- "1"
+  }
+  else if (fbiwide$Year[i] %in% d2) {
+    fbiwide$decade[i] <- "2"
+  }
+  else {
+    fbiwide$decade[i] <- "3"
+  }
+}
+
+fbiwide_sub <- fbiwide[, which(names(fbiwide) %in% c("State", "Aggravated.assault", "Burglary",
+                                                     "Larceny.theft", "Motor.vehicle.theft",
+                                                     "Murder", "Robbery", "decade"))]
+fbiwide_sub$State <- as.factor(fbiwide_sub$State)
+fbiwide_sub$decade <- as.factor(fbiwide_sub$decade)  
+
+fit.lm <- lm(cbind(Aggravated.assault, Burglary, Larceny.theft, 
+                   Motor.vehicle.theft, Murder, Robbery) ~ State * decade, data = fbiwide_sub)
+
+fit.manova <- Manova(fit.lm)
+
+```
+
+The results of two-way MANOVA to test for interaction between states and decades are
+```{r, eval=F}
+Term: State:decade 
+
+Sum of squares and products for the hypothesis:
+                    Aggravated.assault  Burglary Larceny.theft Motor.vehicle.theft    Murder   Robbery
+Aggravated.assault           18.121533 14.210256      3.406088            9.666346  5.006994 12.834579
+Burglary                     14.210256 16.052879      3.971727           10.033611  6.834359 11.965163
+Larceny.theft                 3.406088  3.971727      1.409322            3.652452  1.738742  3.202062
+Motor.vehicle.theft           9.666346 10.033611      3.652452           25.284842 11.631135 15.534786
+Murder                        5.006994  6.834359      1.738742           11.631135  7.967510  8.379406
+Robbery                      12.834579 11.965163      3.202062           15.534786  8.379406 13.905902
+
+Multivariate Tests: State:decade
+                 Df test stat  approx F num Df   den Df     Pr(>F)    
+Pillai            8  1.938368  15.80853     48 1590.000 < 2.22e-16 ***
+Wilks             8  0.051007  22.21457     48 1283.371 < 2.22e-16 ***
+Hotelling-Lawley  8  5.315965  28.61023     48 1550.000 < 2.22e-16 ***
+Roy               8  3.156224 104.54991      8  265.000 < 2.22e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+```
+
+
+We reject the null that there is no interaction between states and decades. <br />
+
+
+
+*c)* <br />
+Sum of squares and products for the hypothesis about `States`, `decade` and interactions betwene them is the following:
+```{r}
+fit.manova$SSP
+```
+
+Sum of squares and products for the residuals are:
+```{r}
+fit.manova$SSPE
+```
+
+
+
+*d)* <br />
+```{r}
+igiveup <- data.frame(matrix(ncol = 4, nrow = nrow(fbiwide_sub)))
+names(igiveup) <- c("State", "decade", "Aggravated.assault - Burglary", "Burglary - Larceny.theft")
+igiveup$State <- fbiwide_sub$State
+igiveup$decade <- fbiwide_sub$decade
+igiveup$`Aggravated.assault - Burglary` <- fbiwide_sub$Aggravated.assault - fbiwide_sub$Burglary
+igiveup$`Burglary - Larceny.theft` <- fbiwide_sub$Burglary - fbiwide_sub$Larceny.theft
+
+fit.lm.lastquestion <- lm(cbind(`Aggravated.assault - Burglary`, `Burglary - Larceny.theft`) ~ State * decade, data = igiveup)
+
+fit.manova.lastquestion <- Manova(fit.lm.lastquestion)
+
+summary(fit.manova.lastquestion)
+```
+
