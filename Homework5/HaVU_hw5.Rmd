@@ -1,0 +1,155 @@
+---
+title: "HaVu_hw5"
+author: "Vu Thi-Hong-Ha"
+date: "April 10, 2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2, suppressMessages())
+library(GGally, suppressMessages())
+library(tidyverse, suppressMessages())
+library(car, suppressMessages())
+library(dplyr, suppressMessages())
+options(warn=-1)
+```
+
+## Question 1:
+Load and manipulate dataframes. <br />
+```{r}
+fbiwide <- read.table("D:/Coursework/Stat 501 Spring 2020/Homework4/fbiwide.txt", sep = " ", header = T, row.names = 1)
+fbiwide <- fbiwide[, !(names(fbiwide) %in% c("Rape")),]
+fbiwide[, 5:11] <- log(fbiwide[, 5:11]/fbiwide$Population)
+fbiwide$Year_1961 <- fbiwide$Year - 1961
+fbiwide$Year_1961_square <- (fbiwide$Year_1961)^2
+fbiwide$Year_1961_cube <- (fbiwide$Year_1961)^3
+fbiwide <- fbiwide[complete.cases(fbiwide),]
+fbiwide$State <- as.factor(fbiwide$State)
+```
+
+*a + b*
+```{r}
+#a
+fit.fbiwide <- lm(as.matrix(fbiwide[, 5:11]) ~ State + Year_1961 + Year_1961_square + Year_1961_cube, data = fbiwide)
+fit.manova <- Manova(fit.fbiwide)
+summary(fit.manova)
+
+
+#b
+regressLines <- data.frame(fbiwide$State, fbiwide$Year, fit.fbiwide$fitted.values)
+regressLines %>% group_by(fbiwide.State) %>% ggplot(aes(y = Burglary, x = fbiwide.Year, colour = fbiwide.State)) + geom_line()
+
+```
+
+*c*
+```{r, eval=F}
+#c
+n <- nrow(fbiwide)
+r <- 4 #number of predictors
+p <- 7 #number of responses
+FcriticalValue <- qf(1 - 0.05, p, n-r-p)
+coef1 <- p * (n - r - 1)/(n - r - p)
+coef2 <- n / (n - r - 1)
+sqrt1 <- sqrt( coef1 * FcriticalValue )
+beta_hat <- fit.fbiwide$coefficients
+z0 <- rep(0, 55)
+z0[1] <- 1
+z0[16] <- 1 #Iowa is the 16th state
+z0[53] <- 2019 - 1961
+z0[54] <- (2019 - 1961)^2
+z0[55] <- (2019 - 1961)^3
+Sigma_matrix <- fit.manova$SSPE * 1/n
+Z_matrix <- model.matrix(fit.fbiwide)
+
+inSqrt2_1 <- 1 + z0 %*% solve( Z_matrix %*% t(Z_matrix) ) %*% t(z0)
+# I didn't know to to proceed because Z_matrix is singular
+
+```
+
+
+*d*
+```{r}
+#d
+C <- cbind(matrix(0, nrow = 3, ncol = 52), diag(1, nrow = 3, ncol = 3))
+linearHypothesis(model = fit.fbiwide, hypothesis.matrix = C)
+
+fit1.fbiwide <- lm(as.matrix(fbiwide[, 5:11]) ~ State, data = fbiwide)
+anova(fit.fbiwide, fit1.fbiwide, test = "Wilks")
+
+```
+The two functions did not give the same results. `anova` gave the result that the three polynomial terms of years were not significant. <br />
+
+*e*
+
+```{r}
+#e
+fbiwide.new <- fbiwide[, -c(2, 3, 4, 12, 13, 14)]
+fbiwide.centered <- fbiwide.new %>% group_by(State) %>% mutate_all(funs(. - mean(.)))
+
+fbiwide.pc <- prcomp(fbiwide.centered[, -1])
+summary(fbiwide.pc)
+```
+
+With this PCA analysis, the first 3 PCs are enough to explain the data. The first PC explains the average of the crime rates between states and time intervals, the second and third PCs explain the contrast of some last few time intervals.  <br />
+
+*f* <br />
+```{r}
+#f
+fbiwide.mean <- fbiwide.new %>% group_by(State) %>% summarise_all(mean)
+fbiwide.mean <- as.matrix(fbiwide.mean[, -1])
+scale <- data.frame(fbiwide.mean %*% fbiwide.pc$rotation)
+scale$State <- unique(fbiwide.centered$State)
+
+pcScores <- as.data.frame(fbiwide.pc$x)
+pcScores[] <- lapply(pcScores, function(x) as.numeric(as.character(x)))
+pcScores$State <- fbiwide.centered$State
+
+pcScores.scaleBack <- inner_join(pcScores, scale, by = 'State') %>%
+  mutate(PC1 = PC1.x + PC1.y, PC2 = PC2.x + PC2.y, PC3 = PC3.x + PC3.y,
+         PC4 = PC4.x + PC4.y, PC5 = PC5.x + PC5.y, PC6 = PC6.x + PC6.y, PC7 = PC7.x + PC7.y) %>%
+  dplyr::select(names(pcScores))
+
+stateToPlot <- subset(pcScores.scaleBack, pcScores.scaleBack$State %in% c("California", "Iowa", "Illinois", "District of Columbia", "New York"))
+
+ggpairs(stateToPlot[, 1:7],
+        aes(color = as.factor(stateToPlot$State)),
+        columns = 1:2, legend = 1) + labs(fill = "Color")
+
+```
+<br />
+
+We can see Iowa and the other places, especially DC are very separate. New York and California seem to have the same patterns. <br />
+
+
+## Question 2:
+```{r}
+digit <- read.table("D:/Coursework/Stat 501 Spring 2020/Homework5/ziptrain.dat")
+digit.y <- read.table("D:/Coursework/Stat 501 Spring 2020/Homework5/zipdigit.dat", col.names = "y")
+data <- data.frame(digit.y, digit)
+fit.digit <- lm(formula = y ~ . + 0, data = data)
+digit.anova <- anova(fit.digit)
+digit.anova <- digit.anova[order(digit.anova$`Pr(>F)`) ,]
+chosen <- row.names(digit.anova[1:100,])
+data <- data[, which(colnames(data) %in% chosen)]
+data.centered <- data - matrix(apply(data, 2, mean),
+                               nrow = nrow(data),
+                               ncol = 100, by = T)
+data.pc <- prcomp(data.centered)
+summary(data.pc)
+
+source("D:/Coursework/Stat 501 Spring 2020/PCs.proportion.variation.enuff.R")
+PCs.proportion.variation.enuff(data.pc$sdev^2, q = 18, 0.8, 2000) #reject the null that the first 18 PCs are adequate to explain
+PCs.proportion.variation.enuff(data.pc$sdev^2, q = 19, 0.8, 2000) #fail to reject the null
+
+
+ggpairs(as.data.frame(data.pc$x + matrix(apply(data, 2, mean),
+                                        nrow = nrow(data),
+                                        ncol = 100, by = T) %*% data.pc$rotation),
+        aes(color = as.factor(digit.y$y)),
+        columns = 1:3, legend = 1) + labs(fill = "Color")
+```
+
+
+
+We need at least 19 PCs in order to explain 80\% of the data. By plotting the first 3 PCs, we can see that it's difficult to separate the digits. Digit 0 and 1 are the only two that seem to be quite distinguishable comparing to the others.

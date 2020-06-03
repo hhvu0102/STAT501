@@ -1,0 +1,31 @@
+---
+title: "Homework 5"
+author: "Your name"
+date: "4/3/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#### Due: 4/10/2019 before 11pm. Submit in Canvas (file upload). Rmd file and the html output file (submit both files) are strongly recommended, but not required.
+
+<br>
+
+1. Consider a simple version of functional data regression on the `fbiwide` data in `data and code` folder in Canvas. Drop the variable `Rape` due to too many missing values.
+
+    (a) Use the log transformation of `crime counts over Population` (expect `Rape`) as response. Use $State$, $Year - 1961$, $(Year - 1961)^2$, $(Year - 1961)^3$ as covariates. Fit the regression model and output the anova analysis results for each covariate. (Delete the obervations with missing values in the data, after dropping the variable `Rape`.) 
+    (b) Use ggplot to plot the regression curve of `Burglary` over time for all the states. 
+    (c) Construct simultaneous 95% prediction intervals for all the responses in the model at Iowa in 2019.
+    (d) Use `linearHypothesis` function and `anova` function in R to test for the signifcance of the 3 polynomial terms of `Year`. Do the two tests have the same results? 
+    (e) Use principal components analysis to reduce the dimensionality of the crimes into fewer dimensions. How many principal components should be chosen? Explain the meaning of the leading principal components. Notice that the data need to be centered separately for each state first. 
+    (f) Is there any distinctiveness of the states `California`, `Iowa`, `Illinois`, `District of Columbia` and `New York` in the first two principal components? (Transformed versions of sample means of each state need to be added back on the PC scores.)
+
+2. The United States Postal Service has had a long-term project to automating the recognition of handwritten digits for zip codes. The data on different numbers of specimens for each digit are available in Canvas. Each observation is in the form of a 256-dimensional vector of pixel intensities. These form a $16 \times 16$ image of pixel intensities for each letter. The objective is to distinguish one digit from another.
+
+    (a) We will see whether the digits are distinguishable. To do so, we will first prepare the dataset by rooting out those pixels (coordinates) which do not contribute to categorization. Do so, using univariate anova test for each coordinate. Choose the 100 most significant coordinates (in terms of the p-value for the above test).
+    (b) We will now use principal components to reduce dimensionality of the original dataset. Note that the images for the different digits have different means and chanracteristics, therefore, it would be preferred to remove the effect of the digit-specific means before performing the principal components analysis. (Transformed versions of these means need to be added back on the PC scores.) Use the principal components and determine the number of components needed to explain at least 80% of the total variation in the data, at the 5% level of significance. 
+    (c) Use `ggplot` to display the leading components (using color or characters for each digit). 
+
+    
