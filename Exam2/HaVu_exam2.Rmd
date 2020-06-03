@@ -1,0 +1,405 @@
+---
+title: "HaVu_exam2"
+author: "Vu Thi-Hong-Ha"
+date: "April 20, 2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(rvest, suppressMessages())
+library(tidyverse, suppressMessages())
+library(sjmisc, suppressMessages())
+library(reshape, suppressMessages())
+library(plyr, suppressMessages())
+library(energy, suppressMessages())
+library(ICSNP, suppressMessages())
+library(GGally, suppressMessages())
+```
+
+First, I extracted all website links to scrape data:
+```{r}
+web <- "https://countryeconomy.com/countries"
+html <- read_html(web)
+
+subweb <- html %>% html_nodes("h4 a") %>% html_attr("href")
+
+for (i in 1:length(subweb)) {
+  subweb[i] <- paste("https://countryeconomy.com", subweb[i], sep = "")
+}
+```
+
+Then I choose to look at 19 Asian countries: China, Indonesia, Malaysia, Myanmar, Philippines, South Korea", Singapore, Thailand, Vietnam, Bangladesh, Pakistan, Sri Lanka, Israel, Jordan, Qatar, Saudi Arabia, Syria, Turkey, and Yemen. The variables (12 variables in total) I choose to look at are: GDP Growth (\%), Education Expenditure (\%Bud.), Gov. Health Exp. (\%Bud.), Defence Expenditure (\%Bud.), Unemployment rate (LFS), Top tax rate + SSC, Exports \% GDP, Imports \% GDP, Birth Rate, Fertility Rate, Population, and CO2 Tons per capita.
+
+```{r}
+countries <- c("china", "indonesia", "malaysia", "burma", "philippines", "south-korea", "singapore", "thailand", "vietnam",
+               "bangladesh", "pakistan", "sri-lanka", 
+               "israel", "jordan", "qatar", "saudi-arabia", "syria", "turkey", "yemen")
+countries <- sort(countries)
+country_urls <- vector()
+for (i in 1:length(subweb)) {
+  if ("TRUE" %in% str_contains(subweb[i], countries)) {
+    temp <- subweb[i]
+    country_urls <- c(country_urls, temp)
+  }
+}
+
+#annual gdp ====
+gdp <- tibble()
+
+for (i in 1:length(country_urls)) {
+  web1 <- read_html(country_urls[i]) %>% html_nodes("a") %>% html_attr("href") %>% grep("gdp", ., value = T) %>%
+    unique() %>% grep(countries[i], ., value = T) %>% paste("https://countryeconomy.com", ., sep = "")
+  tables <- read_html(web1) %>% html_table(fill=TRUE)
+  for (j in 1:length(tables)) {
+    if ("GDP Growth (%)" %in% colnames(tables[[j]])) {
+      temp <- tables[[j]]
+    }
+  }
+  temp$Country <- rep(countries[i], nrow(temp))
+  temp <- temp[, c("Date", "Country", "GDP Growth (%)")]
+  gdp <- rbind(gdp, temp)
+}
+
+gdp$`GDP Growth (%)` <- as.numeric(gsub('[\\%,]', '', gdp$`GDP Growth (%)`))
+gdp <- gdp[complete.cases(gdp) ,]
+meanGDP <- gdp[, -1] %>% group_by(Country) %>% summarise_all(mean)
+#====
+
+#expenditure ====
+expenditure <- tibble()
+
+for (i in 1:length(country_urls)) {
+  web1 <- read_html(country_urls[i]) %>% html_nodes("a") %>% html_attr("href") %>% grep("expenditure", ., value = T) %>%
+    unique() %>% grep(countries[i], ., value = T) %>% paste("https://countryeconomy.com", ., sep = "")
+  tables <- read_html(web1[1]) %>% html_table(fill=TRUE)
+  tables[[1]]$Country <- rep(countries[i], nrow(tables[[1]]))
+  tables[[1]] <- tables[[1]][, c("Date", "Country", "Education Expenditure (%Bud.)", "Gov. Health Exp. (%Bud.)",
+                                 "Defence Expenditure (%Bud.)")]
+  expenditure <- rbind(expenditure, tables[[1]])
+}
+
+expenditure$`Education Expenditure (%Bud.)` <- as.numeric(gsub('[\\%,]', '', expenditure$`Education Expenditure (%Bud.)`))
+expenditure$`Gov. Health Exp. (%Bud.)` <- as.numeric(gsub('[\\%,]', '', expenditure$`Gov. Health Exp. (%Bud.)`))
+expenditure$`Defence Expenditure (%Bud.)` <- as.numeric(gsub('[\\%,]', '', expenditure$`Defence Expenditure (%Bud.)`))
+expenditure <- expenditure[complete.cases(expenditure) ,]
+meanExpenditure <- expenditure[, -1] %>% group_by(Country) %>% summarise_all(mean)
+#====
+
+#unemployment rate ====
+rate <- vector()
+
+for (i in 1:length(country_urls)) {
+  web1 <- read_html(country_urls[i]) %>% html_nodes("a") %>% html_attr("href") %>% grep("labour-force-survey", ., value = T) %>%
+    unique() %>% grep(countries[i], ., value = T) %>% paste("https://countryeconomy.com", ., sep = "")
+  tables <- read_html(web1[1]) %>% html_table(fill=TRUE)
+  rate <- c(rate, tables[[1]][1, 2])
+}
+
+unemployment <- tibble(.rows = length(rate))
+unemployment$Country <- countries
+unemployment$`Unemployment rate (LFS)` <- as.numeric(gsub('[\\%,]', '', rate))
+
+#====
+
+#personal income tax====
+tax <- tibble()
+
+for (i in 1:length(country_urls)) {
+  web1 <- read_html(country_urls[i]) %>% html_nodes("a") %>% html_attr("href") %>% grep("taxes/personal-income-tax", ., value = T) %>%
+    unique() %>% grep(countries[i], ., value = T) %>% paste("https://countryeconomy.com", ., sep = "")
+  tables <- read_html(web1[1]) %>% html_table(fill=TRUE)
+  temp <- tables[[1]]
+  temp$Country <- rep(countries[i], nrow(temp))
+  temp <- temp[, c("Date", "Country", "Top tax rate + SSC")]
+  tax <- rbind(tax, temp)
+}
+tax$`Top tax rate + SSC` <- as.numeric(gsub('[\\%,]', '', tax$`Top tax rate + SSC`))
+meanTax <- tax[, -1] %>% group_by(Country) %>% summarise_all(mean)
+
+#====
+
+#exports ====
+exports <- tibble()
+
+for (i in 1:length(country_urls)) {
+  web1 <- read_html(country_urls[i]) %>% html_nodes("a") %>% html_attr("href") %>% grep("trade/exports", ., value = T) %>%
+    unique() %>% grep(countries[i], ., value = T) %>% paste("https://countryeconomy.com", ., sep = "")
+  tables <- read_html(web1[1]) %>% html_table(fill=TRUE)
+  temp <- tables[[1]]
+  temp$Country <- rep(countries[i], nrow(temp))
+  temp <- temp[, c("Date", "Country", "Exports % GDP")]
+  exports <- rbind(exports, temp)
+}
+exports$`Exports % GDP` <- as.numeric(gsub('[\\%,]', '', exports$`Exports % GDP`))
+exports <- exports[complete.cases(exports) ,]
+meanExports <- exports[, -1] %>% group_by(Country) %>% summarise_all(mean)
+#====
+
+#imports ====
+imports <- tibble()
+
+for (i in 1:length(country_urls)) {
+  web1 <- read_html(country_urls[i]) %>% html_nodes("a") %>% html_attr("href") %>% grep("trade/imports", ., value = T) %>%
+    unique() %>% grep(countries[i], ., value = T) %>% paste("https://countryeconomy.com", ., sep = "")
+  tables <- read_html(web1[1]) %>% html_table(fill=TRUE)
+  temp <- tables[[1]]
+  temp$Country <- rep(countries[i], nrow(temp))
+  temp <- temp[, c("Date", "Country", "Imports % GDP")]
+  imports <- rbind(imports, temp)
+}
+imports$`Imports % GDP` <- as.numeric(gsub('[\\%,]', '', imports$`Imports % GDP`))
+imports <- imports[complete.cases(imports) ,]
+meanImports <- imports[,-1] %>% group_by(Country) %>% summarise_all(mean)
+
+#====
+
+#fertility ====
+#note: fertility rate and birth rate is in ‰
+fertility <- tibble()
+
+for (i in 1:length(country_urls)) {
+  web1 <- read_html(country_urls[i]) %>% html_nodes("a") %>% html_attr("href") %>% grep("/demography/fertility", ., value = T) %>%
+    unique() %>% grep(countries[i], ., value = T) %>% paste("https://countryeconomy.com", ., sep = "")
+  tables <- read_html(web1[1]) %>% html_table(fill=TRUE)
+  temp <- tables[[1]]
+  temp$Country <- rep(countries[i], nrow(temp))
+  temp <- temp[, c("Date", "Country", "Birth Rate", "Fertility Rate")]
+  fertility <- rbind(fertility, temp)
+}
+fertility$`Birth Rate` <- as.numeric(gsub('[\\‰,]', '', fertility$`Birth Rate`))
+fertility$`Fertility Rate` <- as.numeric(fertility$`Fertility Rate`)
+fertility <- fertility[complete.cases(fertility) ,]
+meanFertility <- fertility[, -1] %>% group_by(Country) %>% summarise_all(mean)
+#====
+
+#population ====
+population <- tibble()
+
+for (i in 1:length(country_urls)) {
+  web1 <- read_html(country_urls[i]) %>% html_nodes("a") %>% html_attr("href") %>% grep("/demography/population", ., value = T) %>%
+    unique() %>% grep(countries[i], ., value = T) %>% paste("https://countryeconomy.com", ., sep = "")
+  tables <- read_html(web1[1]) %>% html_table(fill=TRUE)
+  temp <- tables[[1]]
+  temp$Country <- rep(countries[i], nrow(temp))
+  temp <- temp[, c("Date", "Country", "Population")]
+  population <- rbind(population, temp)
+}
+population$Population <- as.numeric(gsub(",", '', population$Population))
+population$Population <- population$Population / 10**6 #unit = million
+meanPop <- population[, -1] %>% group_by(Country) %>% summarise_all(mean)
+#====
+
+#co2 ====
+co2 <- tibble()
+
+for (i in 1:length(country_urls)) {
+  web1 <- read_html(country_urls[i]) %>% html_nodes("a") %>% html_attr("href") %>% grep("/energy-and-environment/co2-emissions", ., value = T) %>%
+    unique() %>% grep(countries[i], ., value = T) %>% paste("https://countryeconomy.com", ., sep = "")
+  tables <- read_html(web1[1]) %>% html_table(fill=TRUE)
+  temp <- tables[[1]]
+  temp$Country <- rep(countries[i], nrow(temp))
+  temp <- temp[, c("Date", "Country", "CO2 Tons per capita")]
+  co2 <- rbind(co2, temp)
+}
+meanCO2 <- co2[, -1] %>% group_by(Country) %>% summarise_all(mean)
+#====
+```
+
+Because data in each category of each country is recorded differently, some countries has data across a long period of time, some do not, so for now, I analyze the mean value of each category of every country. This resulted in a data set as below:
+
+```{r}
+data <- join_all(list(meanGDP, meanExpenditure, unemployment,
+                      meanTax, meanExports, meanImports,
+                      meanFertility, meanPop, meanCO2), by = "Country", type = "left")
+data$Region <- c("south", "east", "east", "east", "western", "western",
+                 "east", "south", "east", "western", "western", "east",
+                 "east", "south", "western", "east", "western", "east", "western")
+head(data)
+```
+
+Define some important functions:
+```{r}
+#functions
+QQplot.normal <- function(x) {
+  # x is an observed vector of a variable
+  x.sort <- sort(x)
+  n <- length(x)
+  p <- ( c(1 : n) - 0.5 ) / n
+  q <- qnorm(p)
+  res <- data.frame(cbind(x.sort, q))
+  names(res) <- c("sample.quantile", "normal.quantile")
+  return(res)
+}
+
+testnormality <- function(X, numproj = 100000) {
+  # note that the value returned is the q-value of the test
+  p = ncol(X)
+  n = nrow(X)
+  x <- matrix(rnorm(numproj * p), nrow = p)
+  y <- matrix(sqrt(apply(x^2, 2, sum)), nrow = p, ncol = numproj, by = T)
+  z <- x / y
+  tempdat <- as.matrix(X) %*% z
+  pvals <- apply(tempdat, 2, function(x) shapiro.test(x)$p.value)
+  return(min(sort(pvals) * numproj / (1:numproj)))
+}
+```
+
+
+First, let's take a look at the data to see if there is any potential outliers. Here, I plot Q-Q plots of the variables, but plot `Population` separately because its scale is too large:
+```{r}
+#make Q-Q plots
+#plot population separately because its scale is too large
+data[, which(!(colnames(data) %in% c("Country", "Population", "Region")))] %>% reshape2::melt() %>% group_by(variable) %>%  dplyr::summarise(x = list(QQplot.normal(value))) %>% unnest(cols = c(x)) %>%
+  qplot(x = normal.quantile, y = sample.quantile, data = ., facets = ~ variable, main = "Q-Q Plot")
+
+#plot population Q-Q plot
+ggplot(data = QQplot.normal(data[, which(colnames(data) %in% c("Population"))]), aes(x = normal.quantile, y = sample.quantile)) + geom_point() +  ggtitle("Population Q-Q Plot")
+
+```
+
+Looking at these plots, we can see that some observations may have very extreme values in `Population`, `Export`, `Import` and `CO2`. I plot those varibles specifically to see which observations stand out:
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE, error=FALSE}
+GGally::ggpairs(data,
+                mapping = aes(label = Country),
+                columns = c(8, 9, 12, 13),
+                upper = list(continuous = function(data, mapping, ...) ggplot(data, mapping) +
+                               geom_text(size = 4, ...)),
+                lower = list(continuous = "blank"),
+                diag = list(continuous = "blankDiag"),
+                axisLabels = "none")
+```
+
+We can see that `China`, `Singapore` and `Qatar` are outliers with very extreme values. Therefore, I excluded these countries from downstream analyses. This results in me having 16 observations. <br />
+
+
+Next, **test for normality** of the data. Null hypothesis is the data is multivariate normal:
+```{r}
+energy::mvnorm.test(data[which(!(data$Country %in% c("china", "qatar", "singapore"))), which(!(colnames(data) %in% c("Country", "Region")))], R = 1e4)
+
+print("Shapiro Wilk's test:")
+testnormality(data[which(!(data$Country %in% c("china", "qatar", "singapore"))), which(!(colnames(data) %in% c("Country", "Region")))])
+```
+We fail to reject the null that the data is multivariate normal at the 5\% significance level. <br />
+
+
+Next, I divide the countries of interest into two geographic regions: East Asia and South - Western Asian. I hypothesize that the mean economic metrics of the two regions are equal. We can test this **inference of means** by using Hotelling's T2 test. But first, we need to see if the two regions have similar covariance matrices. <br />
+
+```{r}
+east <- subset(data, data$Region == "east")
+east <- east[which(!(east$Country %in% c("china", "singapore"))) ,]
+
+southWest <-  subset(data, data$Region != "east")
+southWest <- southWest[which(!(southWest$Country %in% c("qatar"))) ,]
+
+eastCov <- cov(east[, -c(1, 14)])
+southWestCov <- cov(southWest[, -c(1, 14)])
+
+data1 <- rbind(east, southWest)
+data1$Region <- gsub("south", "southWest", data1$Region)
+data1$Region <- gsub("western", "southWest", data1$Region)
+
+data1[, -1] %>% nest(data = -Region) %>%
+  dplyr::mutate(cov = map(data, ~ reshape2::melt(var(.)))) %>%
+  dplyr::select(-data) %>% unnest(cols = c(cov)) %>%
+  qplot(Var1, Var2, fill = value, data = ., facets = ~ Region, geom = "tile") +
+  labs(title = "Heatmap of Covariance", x = NULL, y = NULL, fill = NULL) +
+  scale_fill_gradient2(low = "dodgerblue", mid = "white", high = "coral", midpoint = 0) +
+  coord_fixed() + theme(axis.text.x = element_text(angle = 60, hjust = 1))
+```
+
+We can see that the covariance matrices have similar patterns, so we can carry out Hotelling's T2 test to test for equality of means:
+
+```{r}
+ICSNP::HotellingsT2(east[, -c(1, 14)], southWest[, -c(1, 14)])
+```
+
+We fail to reject the null that the mean of economic metrics of two regions are equal, at the 5\% significance level. If using additional information from UN, we can see that all of the interested countries are developing countries, and most of them have middle income per capita in 2012. <br />
+
+Another way of **inferring for means** is to use one way **MANOVA**:
+```{r}
+fit.lm <- lm(as.matrix(data1[, -c(1, 14)]) ~ Region, data = data1)
+summary(car::Manova(fit.lm)) %>% print(SSP = F)
+```
+
+
+Next, I would like to introduce time series as a factor to study the economic metrics of the countries. Because `Unemployment Rate` does not have enough time series data, I drop that variable for the next analyses. I also drop the countries that have data for all variables in only one year. Hence, for the next steps, I check for 13 countries and 11 variables.
+
+```{r}
+data2 <- join_all(list(gdp, expenditure, tax, exports, imports,
+                      fertility, population, co2), by = c("Date", "Country"), type = "left")
+data2 <- data2[complete.cases(data2) ,]
+data2 <- subset(data2, !(data2$Country %in% c("china", "qatar", "singapore", "jordan", "yemen")))
+
+for (i in 1:nrow(data2)) {
+  if (data2$Country[i] %in% c("bangladesh", "pakistan", "sri-lanka")) {
+    data2$Region[i] <- "south"
+  }  
+  else if (data2$Country[i] %in% c("israel", "saudi-arabia", "syria", "turkey")) {
+    data2$Region[i] <- "western"
+  }
+  else {
+    data2$Region[i] <- "east"
+  }
+}
+
+```
+
+I would like to fit a **multivariate regression** model in which 11 variables are responses, and `Region` and `Date` are covariates.
+
+```{r}
+data2$Region <- as.factor(data2$Region)
+fit_lm <- lm(as.matrix(data2[, -c(1, 2, 14)]) ~ Region + Date, data = data2)
+car::Manova(fit_lm)
+```
+
+We can see both `Region` and `Data` are significant in this model. Next, try plotting the regression line for `GDP` of the countries: <br />
+
+```{r}
+regressLines <- data.frame(data2$Region, data2$Date, fit_lm$fitted.values)
+cname <- colnames(data2)
+colnames(regressLines) <- c("Region", "Date", cname[-c(1, 5, 14)])
+regressLines %>% group_by(Region) %>% ggplot(aes(y = Population, x = Date, colour = Region)) + geom_line()
+```
+We can see that countries in the Southern Asian tend to have larger population than the other regions. Moreover, the populations of all countries increase over time. <br />
+
+
+Next, I'm interested in seeing how the countries are separate from each other using PCA.
+
+```{r}
+data2_centered <- data2 %>% select(-Date, -Country) %>% group_by(Region) %>% 
+  mutate_at(vars(-group_cols()), ~ . - mean(.)) %>% ungroup() %>% select(-Region)
+data2_pca <- prcomp(data2_centered)
+data2_pca$rotation[, 1:3]
+
+source("D:/Coursework/Stat 501 Spring 2020/PCs.proportion.variation.enuff.R")
+options(digits = 3)
+
+pvals <- sapply(1:ncol(data2_centered), function(i)
+PCs.proportion.variation.enuff(data2_pca$sdev ^ 2, i, .96, nrow(data2_centered)))
+rbind(summary(data2_pca)$importance, "P-value" = pvals)[, 1:3]
+```
+
+We can see that the first 3 PCs are enough to explain 96\% of the data. The first PC is the average of all economic/social metrics, with more emphasis on `Trade` variables (i.e. `Exports % GDP` and `Imports % GDP`). The second PC is the contrast between the metrics, especially how `Trade` impacts the contrast. <br />
+
+
+If we plot the first two PCs, we can see that the countries are well separate; however, they do not separate according to regions. One interesting thing is Pakistan and Bangladesh cluster together, while Sri Landka does not, although all three of them are South Asian. There may be many reasons to explain for this, such as Pakistan and Bangladesh (and India) share a long history (they originally were ruled by the British as Indian subcontient), so the countries may have similar patterns in the society.
+
+```{r}
+data2_score <- as.matrix(data2[, -c(1, 2, 14)]) %*% data2_pca$rotation
+data.frame(data2_score[, 1:2], Country = data2$Country) %>%
+  qplot(x = PC1, y = PC2, color = Country, data = ., main = "PC Scores")
+data.frame(data2_score[, 1:2], Region = data2$Region) %>%
+  qplot(x = PC1, y = PC2, color = Region, data = ., main = "PC Scores")
+
+```
+
+```{r}
+data.frame(data2_score[, 1:2], Exports = data2$`Exports % GDP`) %>%
+  qplot(x = PC1, y = PC2, color = Exports, data = ., main = "PC Scores")
+data.frame(data2_score[, 1:2], Imports = data2$`Imports % GDP`) %>%
+  qplot(x = PC1, y = PC2, color = Imports, data = ., main = "PC Scores")
+```
+
+If we compare the separations of the countries with `Trade` variables, we can see that countries that are strong in both `Exports` and `Imports` like `Vietnam` and `Thailand` cluster together.

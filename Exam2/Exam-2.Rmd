@@ -1,0 +1,33 @@
+---
+title: "Exam 2"
+author: "Your name"
+date: "4/14/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#### Due: 4/21/2019 before 11pm. Submit in Canvas (file upload). Rmd file, html output file and data file are required.
+
+<br>
+
+This is a data exploration, from data acquisition, pre-processing, visulization and analysis. You need to extract data online to do an analysis on country economy/social status. 
+
+Data website: https://countryeconomy.com/countries
+
+Websites for additional information:  
+https://www.un.org/en/development/desa/policy/wesp/wesp_current/2014wesp_country_classification.pdf   https://www.un.org/development/desa/dpad/least-developed-country-category.html
+
+Requirement:
+
+ (a) You need to choose some particular research questions of your interest; 
+ (b) Use `R` package `rvest` to scrap data online automatically for each country (use loop), assemble and pre-process those extracted data by `R` (see our lecture notes `Visualization-2`. If you have questions on how to extract data online, you can ask our TA.)
+ (c) analyze several variables (more than 10) of your choice;
+ (d) extract data for each observation for multiple years (you may treat variables from different years as a different variables, or you may treat it as a time series of observations, or you may define new variables based on the time course data);
+ (e) The final data after pre-processing should be stored in a csv file for submitting;
+ (f) Use ggplot to do data visulization;
+ (g) Use at least five of the methods we learn so far for data analysis, choosing from test for normality, inference for means, MANOVA, multi-response regression, PCA, factor analysis, classification;
+ (h) properly explain and interpret your results.
+    
